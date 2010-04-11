@@ -1,0 +1,45 @@
+
+Submit a new job:
+
+<%= form_tag({:action => :submit_job},{:method => "post"}) %>
+
+Job name:
+<input name="job_name"><br/>
+
+Number of machines to launch: <input name="num_instances"><br/>
+
+Processor type:
+<select name="processor_type">
+	<option value="m1.large">m1.large (2 cores)</option>
+	<option value="c1.xlarge">c1.xlarge (8 cores)</option>
+</select><br/>
+
+Spot price:
+<input name="price"><br/>
+
+Your email address:
+<input name="email"><br/>
+
+Organism:
+<select name="organism">
+	<option value="hal">Halobacterium sp. NRC-1</option>
+	<option value="hsa">Homo sapiens</option>
+	<option value="sce">Saccharomyces cerevisiae</option>
+	<option value="hpy">Helicobacter pylori</option>
+	
+</select>
+<br/>
+(coming soon...list of all organisms that cmonkey can run against)<br/>
+
+Project:<br/>
+<select name="project">
+	<option value="proj1">Project 1</option>
+	<option value="proj2">Project 2</option>
+	<option value="proj3">Project 3</option>
+</select>
+<br/>
+Number of clusters (k.clust):<br/>
+<input name="k"><br/>
+
+<br/><input type="submit" value="Submit Job">
+</form>

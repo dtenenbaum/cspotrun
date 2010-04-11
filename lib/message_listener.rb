@@ -11,9 +11,6 @@ class MessageListener
   queue1 = sqs.queue("cspotrun-from-instances")
   
   message = queue1.receive
-  
-#  puts message.methods.sort
-#  pp message
   puts message.to_s
   message.delete unless message.nil?
   
