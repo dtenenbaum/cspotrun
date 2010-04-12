@@ -1,0 +1,4 @@
+config/environment.rb
+config/environments/*.rb
+config/database.yml
+log/*
