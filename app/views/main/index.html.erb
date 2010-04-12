@@ -19,6 +19,8 @@ Spot price:
 
 Your email address:
 <input name="email"><br/>
+Confirm email:
+<input name="email_confirm"><br/>
 
 Organism:
 <select name="organism">
@@ -31,15 +33,18 @@ Organism:
 <br/>
 (coming soon...list of all organisms that cmonkey can run against)<br/>
 
-Project:<br/>
+Project to bill this to: 
 <select name="project">
 	<option value="proj1">Project 1</option>
 	<option value="proj2">Project 2</option>
 	<option value="proj3">Project 3</option>
 </select>
 <br/>
-Number of clusters (k.clust):<br/>
-<input name="k"><br/>
+Number of clusters (k.clust): 
+<input name="k" value="200"><br/>
+
+Ratios data:<br/>
+<textarea name="ratios" rows="10" cols="50"></textarea>
 
 <br/><input type="submit" value="Submit Job">
 </form>
