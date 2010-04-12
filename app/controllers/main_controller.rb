@@ -4,6 +4,13 @@ class MainController < ApplicationController
   
   include Util
   
+  def index
+    @small_price = latest_price("m1.large")
+    @large_price = latest_price("c1.xlarge")
+    @small_recommended = recommended_price(@small_price)
+    @large_recommended = recommended_price(@large_price)
+  end
+  
   def test
     render :text => "ok"
   end
@@ -23,9 +30,13 @@ class MainController < ApplicationController
     
     cmd = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
       "--instance-type #{params[:processor_type]} --key #{AWS_KEY} --type persistent --user-data #{bucketname} #{AMI_ID}"
+    puts "command = "
     puts cmd
-    result = `#{cmd}`
-    puts "result = #{result}"
+    
+    stdout, stderr, error = run_cmd(cmd)
+    puts "was there an error? #{error}"
+    puts "result = "
+    puts (error) ? stderr : stdout
   end
   
   

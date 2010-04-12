@@ -9,13 +9,16 @@ Job name:
 Number of machines to launch: <input name="num_instances"><br/>
 
 Processor type:
-<select name="processor_type">
-	<option value="m1.large">m1.large (2 cores)</option>
-	<option value="c1.xlarge">c1.xlarge (8 cores)</option>
+<select id="processor_type" name="processor_type">
+	<option value="m1.large">m1.large (2 cores) - latest price is $ <%=@small_price%></option>
+	<option value="c1.xlarge">c1.xlarge (8 cores) - latest price is $ <%=@large_price%></option>
 </select><br/>
 
 Spot price:
-<input name="price"><br/>
+<span id="small_recommended_price" class="hide_me"><%=@small_recommended%></span>
+<span id="large_recommended_price" class="hide_me"><%=@large_recommended%></span>
+
+<input id="price" name="price"><br/>
 
 Your email address:
 <input name="email"><br/>
