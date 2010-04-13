@@ -25,7 +25,12 @@ class MainController < ApplicationController
     sdb = start_sdb()
     sdb.put_attributes(dbname, "jobs", params)
     
-    bucketname = "job_#{proj_id}"
+    bucketname = ""
+    if (params[:just_for_fun] == 'true')
+      bucketname += "just_for_fun_"
+    end
+    
+    bucketname += "job_#{proj_id}"
     
     
     cmd = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
@@ -36,6 +41,7 @@ class MainController < ApplicationController
     stdout, stderr, error = run_cmd(cmd)
     puts "was there an error? #{error}"
     puts "result = "
+    # save the result. there will be one line per instance requested, each with a different SIR id
     puts (error) ? stderr : stdout
   end
   
