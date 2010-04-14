@@ -19,7 +19,6 @@ Rails::Initializer.run do |config|
   # Skip frameworks you're not going to use. To use Rails without a database
   # you must remove the Active Record framework.
   # config.frameworks -= [ :active_record, :active_resource, :action_mailer ]
-  config.frameworks -= [ :active_record]
 
   # Specify gems that this application depends on. 
   # They can then be installed with "rake gems:install" on new installations.
@@ -77,4 +76,17 @@ Rails::Initializer.run do |config|
   AWS_SECRET_KEY = "yyy"
   AWS_KEY  = "my-keypair"
   AMI_ID = "my_ami_id"
+  CMONKEY_WORKDIR = "/my/cmonkey/workdir"
+end
+
+
+Dispatcher.to_prepare do
+  if (ENV.has_key?('CSPOTRUN_PREPARED'))
+    # do nothing
+  else
+    ENV['CSPOTRUN_PREPARED'] = 'true'
+    puts "it feels like the first time"
+    # start polling for SQS messages
+    include Startup
+  end
 end

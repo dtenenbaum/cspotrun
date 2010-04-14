@@ -1,10 +1,12 @@
-class Startup
+module Startup
   
   require 'pp'
   require 'rubygems'
+  require 'yaml'
 
   require 'right_aws'
   
+  hostname = `hostname`.chomp()
 
   def self.start_queue()
     sqs = RightAws::SqsGen2.new(AWS_ACCOUNT_KEY,AWS_SECRET_KEY)
@@ -12,7 +14,6 @@ class Startup
     return sqs, queue1
   end
 
-  
   
   sqs, queue1 = start_queue()
 
@@ -33,6 +34,8 @@ class Startup
   # pruned messages that have already been dealt with, you could solve that, but that periodic cron job
   # would need to know about all the instances of the webapp that are listening to messages. So rethink this.
   
+  #  update - that has been dealt with by putting the name of the originating host in the message and ignoring messages not so marked.
+  
   #logger.info("startup class, main thread")
   puts("startup class, in main thread")
   thread = Thread.new() do
@@ -48,8 +51,24 @@ class Startup
           puts "sent at = #{message.sent_at}"
           puts "received at = #{message.received_at}"
           puts "message body:"
+          
+          
           puts message.body
-          message.delete
+          bodyhash = YAML::load message.body
+          
+          puts "bodyhash:"
+          pp bodyhash
+          
+          if (bodyhash['user_data_originating_host'] == hostname)
+            
+            # TODO - consume the message and fire an event
+            
+            puts "deleting message"
+            message.delete 
+          else
+            puts "ignoring message"
+          end
+          
         end
       rescue Exception => ex
         puts "exception, trying to restart queue"

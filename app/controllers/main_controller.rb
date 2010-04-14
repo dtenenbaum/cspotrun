@@ -2,7 +2,13 @@ class MainController < ApplicationController
   
   require 'pp'
   
+  require 'yaml'
+  
   include Util
+
+  def nothing
+    render :text => "ok"
+  end
   
   def index
     @small_price = latest_price("m1.large")
@@ -20,29 +26,47 @@ class MainController < ApplicationController
     render :action => "fillinfields" and return false unless @blanks.empty?
     # do some validation
     # generate a project id
-    proj_id = Time.now.to_i.to_s
-    params['project_id'] = proj_id
-    sdb = start_sdb()
-    sdb.put_attributes(dbname, "jobs", params)
     
-    bucketname = ""
-    if (params[:just_for_fun] == 'true')
-      bucketname += "just_for_fun_"
-    end
-    
-    bucketname += "job_#{proj_id}"
+    @job = Job.new()
     
     
-    cmd = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
-      "--instance-type #{params[:processor_type]} --key #{AWS_KEY} --type persistent --user-data #{bucketname} #{AMI_ID}"
-    puts "command = "
-    puts cmd
+    @job.name = params['job_name']
+    @job.price = params['price']
+    @job.instance_type = params['processor_type']
+    @job.num_instances = params['num_instances']
+    @job.k_clust = params['k']
+    @job.status = 'starting'
+    @job.organism = params['organism']
+    @job.project = params['project']
+    @job.is_test_run = (params['is_test_run'] == 'true') ? true : false
+    @job.email = params['email']
+
+    #begin
+    #  Job.transaction do
+
+        @job.save
+        @job.user_data_file = "/tmp/user_data_#{@job.id}.txt"
+
+        @job.command = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
+          "--instance-type #{params[:processor_type]} --key #{AWS_KEY} --type persistent --user-data-file #{@job.user_data_file} #{AMI_ID}"
+
+
+        @job.ratios_file = "/tmp/ratios_#{@job.id}.txt"
+
+        File.open(@job.ratios_file, "w")  {|file|file.puts(params['ratios'])}
+
+        @job.save
+
+
+        spawn_job(@job)
+
+    #  end
+    #rescue Exception => ex
+    #  puts ex.message
+    #  puts ex.backtrace
+    #end
     
-    stdout, stderr, error = run_cmd(cmd)
-    puts "was there an error? #{error}"
-    puts "result = "
-    # save the result. there will be one line per instance requested, each with a different SIR id
-    puts (error) ? stderr : stdout
+    
   end
   
   
