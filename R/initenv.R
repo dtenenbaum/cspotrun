@@ -45,5 +45,5 @@ e = new.env()
 
 e$cm.func.each.iter <- cm.func.each.iter
 
-e <- cmonkey.init(e, organism=organism, plot.iters=0, k.clust = k.clust, parallel.cores = parallel.cores)
+e <- cmonkey.init(e, organism=organism, plot.iters=0, k.clust=k.clust, parallel.cores=parallel.cores)
 save.image(out.filename)
