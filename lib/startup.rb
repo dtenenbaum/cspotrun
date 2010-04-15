@@ -7,6 +7,8 @@ module Startup
   require 'right_aws'
   
   hostname = `hostname`.chomp()
+  
+  include Util
 
   def self.start_queue()
     sqs = RightAws::SqsGen2.new(AWS_ACCOUNT_KEY,AWS_SECRET_KEY)
@@ -61,7 +63,11 @@ module Startup
           
           if (bodyhash['user_data_originating_host'] == hostname)
             
-            # TODO - consume the message and fire an event
+            job_id = bodyhash['user_data_job_id']
+            fire_event(bodyhash['message'], job_id)
+
+            # TODO - consume the message
+            
             
             puts "deleting message"
             message.delete 

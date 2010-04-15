@@ -9,9 +9,18 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100413220307) do
+ActiveRecord::Schema.define(:version => 20100415175814) do
+
+  create_table "events", :force => true do |t|
+    t.integer  "job_id",     :limit => 11
+    t.string   "text"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "instances", :force => true do |t|
+    t.integer  "job_id",     :limit => 11
+    t.string   "sir_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

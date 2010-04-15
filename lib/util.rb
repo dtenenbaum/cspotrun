@@ -87,7 +87,7 @@ module Util
       args['ratios.file'] = job.ratios_file
       args['k.clust'] = job.k_clust
       args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
-      args['out.filename'] = "/tmp/initedEnv_#{job.id}.R"
+      args['out.filename'] = "/tmp/initedEnv_#{job.id}.RData"
       
       
       rdir = "#{RAILS_ROOT}/R"
@@ -131,18 +131,63 @@ module Util
   end
 
   def fire_event(text, job)
+    e = Event.new(:text => text, :job_id => job.id)
+    e.save
+  end
+  
+  def get_job_bucket_name(job)
+    hostname = safe_bucket_name(`hostname`.chomp())
+    "cspotrun-job-bucket-#{hostname}-#{job.id}"
   end
 
   def create_job_bucket(job)
+    create_bucket(get_job_bucket_name)
+  end
+  
+  def create_bucket(name)
+    puts "Creating bucket #{name}"
+    cmd = "s3cmd.rb createbucket #{name}"
+    stdout stderr, error = run_cmd(cmd)
+    if (error)
+      puts "stderr output creating bucket:\n#{stderr}"
+    end
   end
   
   def move_data_to_job_bucket(job, job_bucket)
+    cmd = "s3cmd.rb put #{get_job_bucket_name()}:initedenv.tar.gz /tmp/initedEnv_#{job.id}.RData"
+    stdout stderr, error = run_cmd(cmd)
+    if (error)
+      puts "stderr output moving data to job bucket:\n#{stderr}"
+    end
   end
   
   def request_instances(job)
+    cmd = job.command
+    stdout stderr, error = run_cmd(cmd)
+    if (error)
+      puts "stderr output requesting instances:\n#{stderr}"
+    end
+    lines = stdout.split
+    for line in lines
+      #SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
+      segs = line.split(/\s/)
+      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
+      i.save
+      fire_event("creating instance #{i.sir_id}", job)
+    end
+    
   end
   
   def create_instance_buckets(job)
+    for instance in job.instances
+      name = "cspotrun-instance-bucket-#{instance.sir_id}"
+      create_bucket(name)
+      fire_event("creating instance bucket #{name}", job)
+    end
+  end
+  
+  def safe_bucket_name(name)
+    name.downcase.gsub("_","-")
   end
   
   
