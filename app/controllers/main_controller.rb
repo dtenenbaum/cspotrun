@@ -4,6 +4,9 @@ class MainController < ApplicationController
   
   require 'yaml'
   
+  require 'rubygems'
+  require 'will_paginate'
+  
   include Util
 
   def nothing
@@ -19,6 +22,10 @@ class MainController < ApplicationController
   
   def test
     render :text => "ok"
+  end
+  
+  def events
+    @events = Event.paginate_by_job_id params['job_id'], :page => params[:page], :order => 'created_at DESC'
   end
   
   def submit_job
@@ -45,6 +52,8 @@ class MainController < ApplicationController
     #  Job.transaction do
 
         @job.save
+        
+        fire_event("starting job #{@job.name} (id #{@job.id})", @job)
         @job.user_data_file = "/tmp/user_data_#{@job.id}.txt"
 
         @job.command = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
@@ -65,8 +74,10 @@ class MainController < ApplicationController
     #  puts ex.message
     #  puts ex.backtrace
     #end
+    @events = Event.paginate_by_job_id @job.id, :page => params[:page], :order => 'created_at DESC'
     
-    
+    flash['notice'] = "Your job has been submitted with ID #{@job.id}"
+    render(:action => "events", :job_id => @job.id) and return false
   end
   
   

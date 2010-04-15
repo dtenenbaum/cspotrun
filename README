@@ -5,6 +5,10 @@ CSpotRun is a system to automatically run machine learning algorithms using spot
 dependencies on webapp side:
 
 R and all cmonkey deps
-RightAws
 amazon ec2 api tools
 s3sync  / s3cmd
+
+
+gems:
+RightAws
+will_paginate
