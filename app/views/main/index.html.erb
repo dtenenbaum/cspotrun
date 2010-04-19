@@ -1,7 +1,7 @@
 
 Submit a new job:
 
-<%= form_tag({:action => :submit_job},{:method => "post"}) %>
+<%= form_tag({:action => :submit_job}, {:method => "post", :multipart => true}) %>
 
 Job name:
 <input name="job_name"><br/>
@@ -46,8 +46,10 @@ Project to bill this to:
 Number of clusters (k.clust): 
 <input name="k" value="200"><br/>
 
-Ratios data:<br/>
-<textarea name="ratios" rows="10" cols="50"></textarea>
+Ratios file:<br/>
+
+<%= file_field_tag 'uploaded_file' %>
+
 <br/>
 <input type="checkbox" name="just_for_fun" value="true" checked/> Is this just a test run? <br/>
 

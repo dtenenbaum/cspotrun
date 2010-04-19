@@ -177,21 +177,21 @@ module Util
   end
 
   def create_job_bucket(job)
-    create_bucket(get_job_bucket_name)
+    create_bucket(get_job_bucket_name(job))
   end
   
   def create_bucket(name)
     puts "Creating bucket #{name}"
     cmd = "s3cmd.rb createbucket #{name}"
-    stdout stderr, error = run_cmd(cmd)
+    stdout, stderr, error = run_cmd(cmd)
     if (error)
       puts "stderr output creating bucket:\n#{stderr}"
     end
   end
   
   def move_data_to_job_bucket(job, job_bucket)
-    cmd = "s3cmd.rb put #{get_job_bucket_name()}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
-    stdout stderr, error = run_cmd(cmd)
+    cmd = "s3cmd.rb put #{get_job_bucket_name(job)}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
+    stdout, stderr, error = run_cmd(cmd)
     if (error)
       puts "stderr output moving data to job bucket:\n#{stderr}"
     end
@@ -199,11 +199,11 @@ module Util
   
   def request_instances(job)
     cmd = job.command
-    stdout stderr, error = run_cmd(cmd)
+    stdout, stderr, error = run_cmd(cmd)
     if (error)
       puts "stderr output requesting instances:\n#{stderr}"
     end
-    lines = stdout.split
+    lines = stdout.split("\n")
     for line in lines
       #SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
       segs = line.split(/\s/)

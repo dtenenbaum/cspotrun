@@ -7,7 +7,20 @@ class MainController < ApplicationController
   require 'rubygems'
   require 'will_paginate'
   
-  #include Util
+  include Util
+
+#  def upltest
+#  end
+
+  def upl
+    f = params['uploaded_file']
+    headers['Content-type'] = 'text/plain'
+    s  = ""
+    while (line = f.gets)
+      s += line
+    end
+    render :text =>  s
+  end
 
   def nothing
     utiltest
@@ -30,7 +43,12 @@ class MainController < ApplicationController
   end
   
   def submit_job
-    @blanks = params.values.find_all{|i|i.empty?}
+    @blanks = []
+    for item in params.values
+      @blanks << item if (item.respond_to?(:empty?) and item.empty?)
+    end
+    
+#    @blanks = params.values.find_all{|i|i.empty?}
     render :action => "fillinfields" and return false unless @blanks.empty?
     # do some validation
     # generate a project id
@@ -60,10 +78,20 @@ class MainController < ApplicationController
         @job.command = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
           "--instance-type #{params[:processor_type]} --key #{AWS_KEY} --type persistent --user-data-file #{@job.user_data_file} #{AMI_ID}"
 
+          
 
         @job.ratios_file = "/tmp/ratios_#{@job.id}.txt"
+        
+        fileobj = params['uploaded_file']
 
-        File.open(@job.ratios_file, "w")  {|file|file.puts(params['ratios'])}
+        puts "writing to #{@job.ratios_file}..."
+
+        File.open(@job.ratios_file, "w")  do |file|
+          while (line = fileobj.gets)
+            file.puts line
+          end
+        end
+        
 
         @job.save
 

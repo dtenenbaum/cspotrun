@@ -1,0 +1,9 @@
+<%= form_tag({:action => :upl}, {:method => "post", :multipart => true}) %>
+
+<%= file_field_tag 'uploaded_file' %>
+
+<br/><input type="submit" value="Submit Job">
+
+
+
+</form>
