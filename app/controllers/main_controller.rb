@@ -7,9 +7,10 @@ class MainController < ApplicationController
   require 'rubygems'
   require 'will_paginate'
   
-  include Util
+  #include Util
 
   def nothing
+    utiltest
     render :text => "ok"
   end
   

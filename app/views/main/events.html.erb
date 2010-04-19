@@ -1,0 +1,28 @@
+
+<font color="red"><%= flash[:notice]%></font><p>&nbsp;</p>
+
+
+<% job_id = (params[:job_id]) ? params[:job_id] : @job.id %>
+
+<%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => job_id)) %><br/>
+
+Events:<br/>
+
+
+<table>
+  <tr>
+    <th>Event</th>
+    <th>Time</th>
+  </tr>
+
+<% for event in @events %>
+  <tr>
+    <td><%= event.text %></td>
+    <td><%= event.created_at %></td>
+  </tr>
+<% end %>
+</table>
+<br/>
+<%= will_paginate @events %>
+
+

@@ -65,7 +65,9 @@ module Util
   
   def spawn_job(job)
     # create init file
+    puts "in spawn_job"
     
+    fire_event("spawning init job", job)
     
     manifest = {}
     manifest['job_id'] = job.id
@@ -80,6 +82,7 @@ module Util
     thread = Thread.new() do
       # do the rest of this stuff in a thread
       logger.info "hello from job submitting thread"
+      puts "hello from job submitting thread"
       fire_event("initializing cmonkey environment", job)
       args = {}
       args['organism'] = job.organism
@@ -106,24 +109,52 @@ module Util
       
       logger.info "R command line:\n#{cmd}"
       
+      
+      system("rm -f #{rdir}/out")
       stdout,stderr,error = run_cmd(cmd)
+      
+      puts "stdout from r init job:\n#{stdout}"
+      puts "stderr from r init job:\n#{stderr}" if error
+      
+      puts "here i am 0"
+      
+      
+      begin
+        #include Util #if RAILS_ENV == 'development'
+        fire_event("creating job bucket", job)
+        puts "here i am 1"
 
-      fire_event("creating job bucket",job)
-      
-      
-      job_bucket = create_job_bucket(job)
-      
-      fire_event("moving initial data to job bucket",job)
-      
-      move_data_to_job_bucket(job, job_bucket)
-      
-      fire_event("requesting instances",job)
-      request_instances(job)
-      
-      fire_event("creating instance buckets",job)
-      
-      create_instance_buckets(job)
-      
+
+        job_bucket = create_job_bucket(job)
+
+
+        puts "here i am 2"
+
+        fire_event("moving initial data to job bucket",job)
+
+        move_data_to_job_bucket(job, job_bucket)
+
+
+        puts "here i am 3"
+
+        fire_event("requesting instances",job)
+        request_instances(job)
+
+        puts "here i am 4"
+
+
+        fire_event("creating instance buckets",job)
+
+        create_instance_buckets(job)
+
+        puts "here i am 5"
+
+
+      rescue Exception => ex
+        puts ex.message
+        puts ex.backtrace
+      end
+
       
       
     end
@@ -131,8 +162,13 @@ module Util
   end
 
   def fire_event(text, job)
+    puts "firing event: #{text} on job #{job.id}"
     e = Event.new(:text => text, :job_id => job.id)
     e.save
+  end
+  
+  def utiltest
+    puts "in test"
   end
   
   def get_job_bucket_name(job)
@@ -154,7 +190,7 @@ module Util
   end
   
   def move_data_to_job_bucket(job, job_bucket)
-    cmd = "s3cmd.rb put #{get_job_bucket_name()}:initedenv.tar.gz /tmp/initedEnv_#{job.id}.RData"
+    cmd = "s3cmd.rb put #{get_job_bucket_name()}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
     stdout stderr, error = run_cmd(cmd)
     if (error)
       puts "stderr output moving data to job bucket:\n#{stderr}"

@@ -48,21 +48,22 @@ module Startup
         # http://rightscale.rubyforge.org/right_aws_gem_doc/classes/RightAws/Sqs/Message.html
         message = queue1.receive
         unless message.nil?
-          #puts message.methods.sort
-          puts "message id = #{message.id}"
-          puts "sent at = #{message.sent_at}"
-          puts "received at = #{message.received_at}"
-          puts "message body:"
           
-          
-          puts message.body
           bodyhash = YAML::load message.body
           
-          puts "bodyhash:"
-          pp bodyhash
-          
           if (bodyhash['user_data_originating_host'] == hostname)
-            
+
+            puts "message id = #{message.id}"
+            puts "sent at = #{message.sent_at}"
+            puts "received at = #{message.received_at}"
+            puts "message body:"
+
+
+            puts message.body
+
+            puts "bodyhash:"
+
+            pp bodyhash 
             job_id = bodyhash['user_data_job_id']
             fire_event(bodyhash['message'], job_id)
 
@@ -72,7 +73,7 @@ module Startup
             puts "deleting message"
             message.delete 
           else
-            puts "ignoring message"
+            #puts "ignoring message"
           end
           
         end
