@@ -1,5 +1,5 @@
 # start this up separately from the rails app
-module MessageListener
+class MessageListener
   
   puts "running MessageListener..."
   
@@ -9,22 +9,19 @@ module MessageListener
 
   require 'right_aws'
   
-  hostname = `hostname`.chomp()
   
   include Util
 
-  def self.start_queue()
+  def start_queue()
     sqs = RightAws::SqsGen2.new(AWS_ACCOUNT_KEY,AWS_SECRET_KEY)
     queue1 = sqs.queue("cspotrun-from-instances")
     return sqs, queue1
   end
 
-  
-  sqs, queue1 = start_queue()
 
 
 
-  start_queue()
+#  start_queue()
 
   # todo - deal with the issue of consuming messages - if there are two or more instances of this webapp running
   # (development and production), they will not see the messages you expect them to see because currently each message
@@ -42,7 +39,11 @@ module MessageListener
   #  update - that has been dealt with by putting the name of the originating host in the message and ignoring messages not so marked.
   
   #logger.info("startup class, main thread")
+def start
   puts("startup class, in main thread")
+  hostname = `hostname`.chomp()
+  sqs, queue1 = start_queue()
+
     while (true)
       #puts "in timer loop"
       begin
@@ -67,7 +68,7 @@ module MessageListener
 
             pp bodyhash 
             job_id = bodyhash['user_data_job_id']
-            fire_event(bodyhash['message'], job_id)
+            fire_event(bodyhash['message'], job_id, bodyhash['instance-id'])
 
             # TODO - consume the message
             
@@ -90,6 +91,10 @@ module MessageListener
       sleep(1)
     end
   
-  
+end  
   
 end
+
+logger = RAILS_DEFAULT_LOGGER
+ml = MessageListener.new
+ml.start

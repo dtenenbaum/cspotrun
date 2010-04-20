@@ -5,8 +5,7 @@
 # since you don't have to restart the webserver when you make code changes.
 
 
-# set to true to make cspotrun work in dev mode
-config.cache_classes = true
+config.cache_classes = false
 
 # Log error messages when you accidentally call methods on nil.
 config.whiny_nils = true

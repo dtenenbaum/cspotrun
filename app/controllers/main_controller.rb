@@ -96,7 +96,15 @@ class MainController < ApplicationController
         @job.save
 
 
-        spawn_job(@job)
+        cmd = "rm -f #{RAILS_ROOT}/log/spawn.log && cd #{RAILS_ROOT} && ./script/runner SpawnJob #{@job.id} > #{RAILS_ROOT}/log/spawn.log 2>&1 &"
+        puts "spawn command = \n#{cmd}"
+        stdout, stderr, error  = run_cmd(cmd)
+        if  (error)
+          puts "stderr output:\n#{stderr}"
+        end
+        puts "stdout output:\n#{stdout}"
+
+       ## spawn_job(@job)
 
     #  end
     #rescue Exception => ex

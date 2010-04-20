@@ -30,8 +30,9 @@ class ConsumeMessages
       puts "no messages!"
       exit
     else
+      puts message
+      puts
       message.delete
-      puts "deleted message"
     end
     
     sleep 1

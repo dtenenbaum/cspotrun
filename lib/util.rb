@@ -4,20 +4,23 @@ module Util
   require 'right_aws'
   require 'open3'
   
+  #unless (defined?(logger))
+  #  logger.info "Setting logger"
+  #  ##logger = Rails.logger
+  #  logger = RAILS_DEFAULT_LOGGER
+  #end
   
-  def start_sdb
-    sdb = RightAws::SdbInterface.new(AWS_ACCOUNT_KEY,AWS_SECRET_KEY)
-    newdomain = sdb.create_domain(dbname())
-    puts "newdomain:"
-    pp newdomain
-    puts "domains:"
-    domains = sdb.list_domains
-    pp domains
-    return sdb
+  def logger
+    Rails.logger
   end
   
-  def dbname
-    "cspotrun_#{RAILS_ENV}"
+  def self.atest
+    logger.info "a test"
+  end
+  
+  
+  def do_nothing
+    logger.info "does this count as nothing?"
   end
   
   def run_cmd(cmd)
@@ -34,16 +37,16 @@ module Util
   end
   
   def latest_price(instance_type)
-    puts "getting latest price for #{instance_type}"
+    logger.info "getting latest price for #{instance_type}"
     timestamp = aws_timestamp(Time.now)
     cmd = "ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
     stdout,stderr,error = run_cmd(cmd)
     if error
-      puts "oops, an error:"
-      puts stderr
+      logger.info "oops, an error:"
+      logger.info stderr
     else
-      puts "result:"
-      puts stdout
+      logger.info "result:"
+      logger.info stdout
       lines = stdout.split("\n")
       for line in lines
         next if line.downcase =~ /windows/
@@ -65,7 +68,7 @@ module Util
   
   def spawn_job(job)
     # create init file
-    puts "in spawn_job"
+    logger.info "in spawn_job"
     
     fire_event("spawning init job", job)
     
@@ -79,10 +82,10 @@ module Util
     File.open(job.user_data_file, "w") {|file| file.puts(manifest_yaml)}
     
     
-    thread = Thread.new() do
+   ## thread = Thread.new() do
       # do the rest of this stuff in a thread
       logger.info "hello from job submitting thread"
-      puts "hello from job submitting thread"
+      logger.info "hello from job submitting thread"
       fire_event("initializing cmonkey environment", job)
       args = {}
       args['organism'] = job.organism
@@ -113,8 +116,8 @@ module Util
       system("rm -f #{rdir}/out")
       stdout,stderr,error = run_cmd(cmd)
       
-      puts "stdout from r init job:\n#{stdout}"
-      puts "stderr from r init job:\n#{stderr}" if error
+      logger.info "stdout from r init job:\n#{stdout}"
+      logger.info "stderr from r init job:\n#{stderr}" if error
       
       
       
@@ -136,25 +139,35 @@ module Util
         create_instance_buckets(job)
 
       rescue Exception => ex
-        puts ex.message
-        puts ex.backtrace
+        logger.info ex.message
+        logger.info ex.backtrace
       end
 
       
       
-    end
+    ##end
     
   end
 
-  def fire_event(text, job)
+  def fire_event(text, job, instance_name=nil)
     id  = (job.is_a?(Fixnum)) ? job : job.id
-    puts "firing event: #{text} on job #{id}"
-    e = Event.new(:text => text, :job_id => id)
+    
+    instance_id = nil
+
+    unless (instance_name.nil?)
+      instance = Instance.find_by_sir_id(instance_name)
+      instance_id = instance.id unless instance.nil?
+    end
+
+    logger.info "firing event: #{text} on job #{id}, instance_id = #{instance_id}"
+
+    
+    e = Event.new(:text => text, :job_id => id, :instance_id => instance_id)
     e.save
   end
   
   def utiltest
-    puts "in test"
+    logger.info "in test"
   end
   
   def get_job_bucket_name(job)
@@ -167,11 +180,11 @@ module Util
   end
   
   def create_bucket(name)
-    puts "Creating bucket #{name}"
+    logger.info "Creating bucket #{name}"
     cmd = "s3cmd.rb createbucket #{name}"
     stdout, stderr, error = run_cmd(cmd)
     if (error)
-      puts "stderr output creating bucket:\n#{stderr}"
+      logger.info "stderr output creating bucket:\n#{stderr}"
     end
   end
   
@@ -179,7 +192,7 @@ module Util
     cmd = "s3cmd.rb put #{get_job_bucket_name(job)}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
     stdout, stderr, error = run_cmd(cmd)
     if (error)
-      puts "stderr output moving data to job bucket:\n#{stderr}"
+      logger.info "stderr output moving data to job bucket:\n#{stderr}"
     end
   end
   
@@ -187,7 +200,7 @@ module Util
     cmd = job.command
     stdout, stderr, error = run_cmd(cmd)
     if (error)
-      puts "stderr output requesting instances:\n#{stderr}"
+      logger.info "stderr output requesting instances:\n#{stderr}"
     end
     lines = stdout.split("\n")
     for line in lines
