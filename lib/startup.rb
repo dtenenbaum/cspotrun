@@ -46,7 +46,7 @@ module Startup
       #puts "in timer loop"
       begin
         # http://rightscale.rubyforge.org/right_aws_gem_doc/classes/RightAws/Sqs/Message.html
-        puts "waiting"
+        #puts "waiting"
         message = queue1.receive
         unless message.nil?
           

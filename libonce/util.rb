@@ -162,8 +162,9 @@ module Util
   end
 
   def fire_event(text, job)
-    puts "firing event: #{text} on job #{job.id}"
-    e = Event.new(:text => text, :job_id => job.id)
+    id  = (job.is_a?(Fixnum)) ? job : job.id
+    puts "firing event: #{text} on job #{id}"
+    e = Event.new(:text => text, :job_id => id)
     e.save
   end
   
