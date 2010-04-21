@@ -70,7 +70,6 @@ def start
             job_id = bodyhash['user_data_job_id']
             fire_event(bodyhash['message'], job_id, bodyhash['spot-instance-request-id'])
 
-            # TODO - consume the message
             
             
             puts "deleting message"
