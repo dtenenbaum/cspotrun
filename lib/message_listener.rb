@@ -68,7 +68,7 @@ def start
 
             pp bodyhash 
             job_id = bodyhash['user_data_job_id']
-            fire_event(bodyhash['message'], job_id, bodyhash['instance-id'])
+            fire_event(bodyhash['message'], job_id, bodyhash['spot-instance-request-id'])
 
             # TODO - consume the message
             
