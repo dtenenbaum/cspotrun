@@ -6,8 +6,8 @@
 # organism - the three letter organism code
 # ratios.file - the name of the file containing the ratios
 # k.clust = the number of clusters (default 200)
+# n.iter = the number of iterations (default 3000)
 # parallel.cores = the number of cores
-# (NOTE - init seems to set cores to 2 even when we specify 8)
 # out.filename = the file to write the initialized environment to (the environment will be called 'e')
 
 args = (commandArgs(TRUE))
@@ -28,6 +28,10 @@ pc <- parallel.cores
 
 if (!exists("k.clust")) {
     k.clust <- 200
+}
+
+if (!exists("n.iter")) {
+    n.iter <- 3000
 }
 
 setwd(cmonkey.workdir)

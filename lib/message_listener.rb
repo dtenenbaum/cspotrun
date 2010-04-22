@@ -43,6 +43,8 @@ def start
   puts("startup class, in main thread")
   hostname = `hostname`.chomp()
   sqs, queue1 = start_queue()
+  
+  
 
     while (true)
       #puts "in timer loop"
@@ -68,6 +70,7 @@ def start
 
             pp bodyhash 
             job_id = bodyhash['user_data_job_id']
+            # todo - don't delete message unless fire_event is successful
             fire_event(bodyhash['message'], job_id, bodyhash['spot-instance-request-id'])
 
             

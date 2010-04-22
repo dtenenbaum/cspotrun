@@ -94,6 +94,7 @@ module Util
       args['k.clust'] = job.k_clust
       args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
       args['out.filename'] = "/tmp/initedEnv_#{job.id}.RData"
+      args['n.iter'] = job.n_iter
       
       
       rdir = "#{RAILS_ROOT}/R"
