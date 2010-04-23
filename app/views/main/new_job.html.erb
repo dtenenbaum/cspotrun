@@ -1,5 +1,5 @@
 
-Submit a new job:
+<b>Submit a new job:</b>
 
 <%= form_tag({:action => :submit_job}, {:method => "post", :multipart => true}) %>
 
@@ -25,8 +25,8 @@ Number of machines to launch:
 Processor type:
 </td><td>
 <select id="processor_type" name="processor_type">
+  <option value="c1.xlarge">c1.xlarge (8 cores) - latest price is $ <%=@large_price%></option>
 	<option value="m1.large">m1.large (2 cores) - latest price is $ <%=@small_price%></option>
-	<option value="c1.xlarge">c1.xlarge (8 cores) - latest price is $ <%=@large_price%></option>
 </select>
 </td>
 </tr>
@@ -97,7 +97,7 @@ Ratios file:
 Is this just a test run? 
 </td>
 <td>
-<input type="checkbox" name="just_for_fun" value="true" checked/> 
+<input type="checkbox" name="just_for_fun" value="true"/> 
 </td>
 </tr>
 </table>

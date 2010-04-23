@@ -5,7 +5,7 @@ jQuery(document).ready(function() {
    jQuery("#email_input").focus();
    jQuery(".hide_me").hide();
    
-   jQuery("#price").val(jQuery("#small_recommended_price").html());
+   jQuery("#price").val(jQuery("#large_recommended_price").html());
    
    jQuery("#processor_type").change(function(){
       var id = (jQuery("#processor_type").val() == "m1.large") ? "#small_recommended_price" : "#large_recommended_price";
