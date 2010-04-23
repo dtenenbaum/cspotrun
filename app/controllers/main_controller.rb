@@ -71,6 +71,10 @@ class MainController < ApplicationController
     render :text => "ok"
   end
   
+  def index
+    render :action => "welcome" and return false
+  end
+  
   def events
     #puts "timezone = #{Time.zone}"
     
