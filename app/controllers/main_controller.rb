@@ -75,6 +75,18 @@ class MainController < ApplicationController
     render :action => "welcome" and return false
   end
   
+  
+  def my_jobs
+    @jobs = Job.paginate_by_email session[:user], :page => params[:page], :order => 'created_at DESC'
+    render :action => "jobs"
+  end
+  
+  def all_jobs
+    @jobs = Job.paginate :page => params[:page], :order => 'created_at DESC'
+    render :action => "jobs"
+  end
+  
+  
   def events
     #puts "timezone = #{Time.zone}"
     

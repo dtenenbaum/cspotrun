@@ -55,8 +55,8 @@
   <li><%= link_to "Login", :action  => "login"%></li>
 <% end %>
 <li><%= link_to "New Job", :action => "new_job"%></li>
-<li><a href="#">My Jobs</a></li>
-<li><a href="#">All Jobs</a></li>
+<li><%= link_to "My Jobs", :action => "my_jobs"%></li>
+<li><%= link_to "All Jobs", :action => "all_jobs"%></li>
 <li><a target="aws_console" href="https://console.aws.amazon.com/ec2/home">AWS Console</a></li></ul>
 <% unless session[:user].nil? %>
   <li><%= link_to "Log Out", :action  => "logout"%></li>
