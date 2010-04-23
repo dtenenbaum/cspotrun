@@ -3,29 +3,50 @@ Submit a new job:
 
 <%= form_tag({:action => :submit_job}, {:method => "post", :multipart => true}) %>
 
+
+<table border="0">
+<tr>
+<td>
 Job name:
-<input name="job_name"><br/>
-
-Number of machines to launch: <input name="num_instances"><br/>
-
+</td><td>
+<input name="job_name">
+</td>
+</tr>
+<tr>
+<td>
+Number of machines to launch:
+</td>
+<td>
+<input name="num_instances">
+</td>
+</tr>
+<tr>
+<td>
 Processor type:
+</td><td>
 <select id="processor_type" name="processor_type">
 	<option value="m1.large">m1.large (2 cores) - latest price is $ <%=@small_price%></option>
 	<option value="c1.xlarge">c1.xlarge (8 cores) - latest price is $ <%=@large_price%></option>
-</select><br/>
-
+</select>
+</td>
+</tr>
+<tr>
+<td>
 Spot price:
+</td>
+<td>
 <span id="small_recommended_price" class="hide_me"><%=@small_recommended%></span>
 <span id="large_recommended_price" class="hide_me"><%=@large_recommended%></span>
 
-<input id="price" name="price"><br/>
+<input id="price" name="price">
+</td>
+</tr>
 
-Your email address:
-<input name="email"><br/>
-Confirm email:
-<input name="email_confirm"><br/>
-
+<tr>
+<td>
 Organism:
+</td>
+<td>
 <select name="organism">
 	<option value="hal">Halobacterium sp. NRC-1</option>
 	<option value="hpy">Helicobacter pylori</option>
@@ -33,29 +54,53 @@ Organism:
 	<option value="sce">Saccharomyces cerevisiae</option>
 	
 </select>
-<br/>
-(coming soon...list of all organisms that cmonkey can run against)<br/>
-
+</td>
+</tr>
+<tr>
+<td>
 Project to bill this to: 
+</td>
+<td>
 <select name="project">
 	<option value="proj1">Project 1</option>
 	<option value="proj2">Project 2</option>
 	<option value="proj3">Project 3</option>
 </select>
-<br/>
+</td>
+</tr>
+<tr>
+<td>
 Number of clusters (k.clust): 
-<input name="k" value="200"><br/>
-
+</td>
+<td>
+<input name="k" value="200">
+</td>
+</tr>
+<tr>
+<td>
 Number of iterations (n.iter):
-<input name="n_iter" value="3000"><br/>
-
-Ratios file:<br/>
-
+</td>
+<td>
+<input name="n_iter" value="3000">
+</td>
+</tr>
+<tr>
+<td>
+Ratios file:
+</td>
+<td>
 <%= file_field_tag 'uploaded_file' %>
-
-<br/>
-<input type="checkbox" name="just_for_fun" value="true" checked/> Is this just a test run? <br/>
-
-
+</td>
+</tr>
+<tr>
+<td>
+Is this just a test run? 
+</td>
+<td>
+<input type="checkbox" name="just_for_fun" value="true" checked/> 
+</td>
+</tr>
+</table>
 <br/><input type="submit" value="Submit Job">
+
 </form>

@@ -1,6 +1,8 @@
 jQuery.noConflict();
 
 jQuery(document).ready(function() {
+    
+   jQuery("#email_input").focus();
    jQuery(".hide_me").hide();
    
    jQuery("#price").val(jQuery("#small_recommended_price").html());

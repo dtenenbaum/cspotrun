@@ -1,0 +1,34 @@
+body {margin:0; background:url(../images/body_bg.png); font-family:Arial, Helvetica, sans-serif;}
+
+#container {width:946px; margin:0 auto;}
+
+#header {height:102px;}
+#logo {float:left; padding:33px 0 0 33px; font-size:32px; font-family:"Comic Sans MS", cursive;}
+#logo a {color:#FFFFFF; text-decoration:none;}
+#slogan {float:right; color:#FFFFFF; font-size:16px; text-align:center; font-family:"Comic Sans MS", cursive; padding:33px 33px 0 0;}
+
+#text {margin-right:250px;}
+#text_top {background:url(../images/text_top.png) no-repeat; height:8px; font-size:1px;}
+#text_bottom {background:url(../images/text_bottom.png) no-repeat; height:8px; font-size:1px; margin-bottom:4px;}
+#text_main {background:url(../images/text_bg.png) repeat-y; padding:26px 34px;}
+#text br {line-height:10px;}
+#text h1 {font-size:28px; font-weight:normal; margin:0 0 8px 0; color:#CCB591; font-family:Georgia, "Times New Roman", Times, serif; font-style:italic;}
+#text h2 {font-size:24px; font-weight:normal; margin:24px 0 8px 0; color:#C4A980; font-family:Georgia, "Times New Roman", Times, serif; font-style:italic;}
+#text ol, #text ul {padding:0; margin:10px 0;}
+#text li {margin-left:40px;}
+
+#text, #sidebar {font-size:13px; line-height:17px; color:#444444;}
+#text a, #sidebar a {color:#7494b6;}
+#text a:hover, #sidebar a:hover {color:#4C6D91;}
+
+#sidebar {width:246px; float:right; margin-left:4px;}
+.sidebar_top {background:url(../images/sidebar_top.png) no-repeat; height:8px; font-size:1px;}
+.sidebar_main {background:url(../images/sidebar_bg.png) repeat-y; padding:10px 24px 16px 24px;}
+.sidebar_bottom {background:url(../images/sidebar_bottom.png) no-repeat; height:8px; font-size:1px; margin-bottom:4px;}
+#sidebar h3 {font-size:20px; font-weight:normal; margin:0 0 8px 0; color:#C4A980; font-family:Georgia, "Times New Roman", Times, serif; font-style:italic;}
+#sidebar ul {margin:0px; padding:0px;}
+#sidebar li {list-style:none; padding:1px 0 1px 12px; background:url(../images/li.png) 0px 8px no-repeat;}
+
+#footer {color:#FEFDFC; clear:both; text-align:center; font-size:11px; line-height:17px; height:45px; padding-top:18px;}
+#footer a {color:#FEFDFC;}
+#footer a:hover {color:#F5F0EB;}

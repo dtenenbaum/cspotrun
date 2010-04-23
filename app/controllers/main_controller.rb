@@ -9,8 +9,41 @@ class MainController < ApplicationController
   
   include Util
 
+  Time.zone = "Pacific Time (US & Canada)"
+
+  before_filter :authorize, :except => [:login, :logout]
+
 #  def upltest
 #  end
+
+  def authorize
+    if (session[:user].nil? or session[:user].empty?)
+      redirect_to :action => "login" and return false
+    end
+  end
+
+  def login
+    puts "in login, rm= #{request.method}"
+    if (request.method == :post)
+      puts "method == post"
+      user = User.authenticate(params[:email], params[:password], false)
+      if user == false
+        puts "invalid login"
+        flash[:notice] = "Invalid Login"
+        redirect_to :action => "login" and return false
+      else
+        puts "valid login"
+        session[:user] = params['email']
+        redirect_to :action => "welcome" and return false
+      end
+    end
+  end
+  
+  def logout
+    session[:user] = nil
+    redirect_to :action => "login"
+  end
+
 
   def upl
     f = params['uploaded_file']
@@ -27,7 +60,7 @@ class MainController < ApplicationController
     render :text => "ok"
   end
   
-  def index
+  def new_job
     @small_price = latest_price("m1.large")
     @large_price = latest_price("c1.xlarge")
     @small_recommended = recommended_price(@small_price)
@@ -39,6 +72,8 @@ class MainController < ApplicationController
   end
   
   def events
+    #puts "timezone = #{Time.zone}"
+    
     @events = Event.paginate_by_job_id params['job_id'], :page => params[:page], :order => 'created_at DESC'
   end
   
@@ -65,7 +100,7 @@ class MainController < ApplicationController
     @job.organism = params['organism']
     @job.project = params['project']
     @job.is_test_run = (params['is_test_run'] == 'true') ? true : false
-    @job.email = params['email']
+    @job.email = session['user']
     @job.n_iter = params['n_iter']
 
     #begin
