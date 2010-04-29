@@ -22,3 +22,10 @@ config.action_controller.perform_caching             = true
 
 # Disable delivery errors, bad email addresses will be ignored
 # config.action_mailer.raise_delivery_errors = false
+
+config.action_mailer.delivery_method = :sendmail
+
+
+# app specific configuration
+STATIC_FILES_FOLDER = "/path/to/cspotrun_output"
+STATIC_FILES_URL = "http://somehost.com/cspotrun_output"

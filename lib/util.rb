@@ -226,5 +226,55 @@ module Util
     name.downcase.gsub("_","-")
   end
   
+  def handle_job_completion(job, instance_id) #test with 70
+    puts "in Util.handle_job_completion, job id is #{job.id}"
+    
+    my_instance = Instance.find(instance_id)
+    
+    my_instance.status = "success"
+    my_instance.save
+    
+    instances = job.instances
+    
+    success_stories = instances.select{|i|i.status == "success"}
+    if (success_stories.length == instances.length)
+      #Dir.mkdir("/tmp/cspotrun_output") unless (test(?d,"/tmp/cspotrun_output"))
+      Dir.mkdir(STATIC_FILES_FOLDER) unless (test(?d, STATIC_FILES_FOLDER))
+      jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
+
+      Dir.mkdir(jobdir) unless (test(?d, jobdir))
+
+      instances.each_with_index do |instance, i|
+        instance_dir = "#{jobdir}/instance_#{i+1}"
+        Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
+        bucketname = "cspotrun-instance-bucket-#{instance.sir_id}"
+        get_file_from_s3(bucketname, "complete.image.RData", "#{instance_dir}/complete.image.RData")
+        get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+      end
+      cmd = "cd #{STATIC_FILES_FOLDER};zip -r job_#{job.id}.zip job_#{job.id}/"
+      stdout, stderr, error = run_cmd(cmd)
+      if error
+        puts "stderr creating zip:\n#{stderr}"
+      end
+      puts "stdout creating zip (#{cmd}) :\n#{stdout}"
+      url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
+      # todo - include size of file in email
+      Emailer.deliver_notify_success(url, job)
+      
+    end
+    
+    
+    
+  end
+  
+  def get_file_from_s3(bucketname, remotefile, localfile)
+    cmd = "s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
+    stdout,stderr,error = run_cmd(cmd)
+    if (error)
+      puts "stderr getting file from s3 (#{cmd}):\n#{stderr}"
+    end
+    puts "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+  end
+  
   
 end
