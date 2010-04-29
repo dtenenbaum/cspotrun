@@ -70,8 +70,9 @@ def start
 
             pp bodyhash 
             job_id = bodyhash['user_data_job_id']
+            public_ip = bodyhash['public-hostname']
             # todo - don't delete message unless fire_event is successful
-            fire_event(bodyhash['message'], job_id, bodyhash['spot-instance-request-id'])
+            fire_event(bodyhash['message'], job_id, bodyhash['spot-instance-request-id'], public_ip)
 
             
             

@@ -1,10 +1,12 @@
 Dear <%= @job.email %>,
 
-Job number <%= @job.id %>, named <%= @job.name %>, has completed successfully.
+Job number <%= @job.id %>, named "<%= @job.name %>", consisting of <%= @job.instances.size %> instances, has completed successfully.
 
 You can download the results of this job here:
 
 <%= @url %>
+
+This file is <%= (@filesize / 1_000_000).to_i %> MB in size.
 
 Thank you for using CSpotRun.
 

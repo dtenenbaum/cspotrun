@@ -1,0 +1,13 @@
+An instance of job #<%=@job.id%>, "<%= @job.name %>" has failed!
+
+The instance id is <%= @instance.id %>, the spot instance request name is <%= @instance.sir_id %>.
+
+You can connect to this instance to determine the cause of this problem. The instance will be shut down within
+10 minutes unless you (do some as yet unspecified action). 
+
+The hostname of the instance is: <%= @event.public_ip %>.
+
+The last 200 lines of the log file follow.
+
+<%= @tail %>
+

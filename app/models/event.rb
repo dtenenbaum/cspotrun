@@ -13,7 +13,7 @@ class Event < ActiveRecord::Base
       # assemble output data into zip file, notify user that run is complete
       handle_job_completion(job, instance_id)
     elsif (text == "cmonkey env file was not written! leaving instance on!")
-      # notify user that run has failed
+      handle_job_failure(job, self)
     end
   end
   

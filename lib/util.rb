@@ -86,40 +86,47 @@ module Util
       # do the rest of this stuff in a thread
       logger.info "hello from job submitting thread"
       logger.info "hello from job submitting thread"
-      fire_event("initializing cmonkey environment", job)
-      args = {}
-      args['organism'] = job.organism
-      args['cmonkey.workdir'] = CMONKEY_WORKDIR
-      args['ratios.file'] = job.ratios_file
-      args['k.clust'] = job.k_clust
-      args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
-      args['out.filename'] = "/tmp/initedEnv_#{job.id}.RData"
-      args['n.iter'] = job.n_iter
       
-      
-      rdir = "#{RAILS_ROOT}/R"
-      cmd = "R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R #{rdir}/out"
-      
-      
-      argstr = ""
-      args.each_key do |key|
-        value = args[key]
-        value = %Q("#{value}") if value.respond_to?(:downcase)
-        argstr += "#{key}=#{value} "
+      if (job.user_supplied_rdata)
+        # no need to run R, we have a preinitialized RData file
+      else
+        fire_event("initializing cmonkey environment", job)
+        args = {}
+        args['organism'] = job.organism
+        args['cmonkey.workdir'] = CMONKEY_WORKDIR
+        args['ratios.file'] = job.ratios_file
+        args['k.clust'] = job.k_clust
+        args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
+        args['out.filename'] = "/tmp/initedEnv_#{job.id}.RData"
+        args['n.iter'] = job.n_iter
+
+
+        rdir = "#{RAILS_ROOT}/R"
+        cmd = "R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R #{rdir}/out"
+
+
+        argstr = ""
+        args.each_key do |key|
+          value = args[key]
+          value = %Q("#{value}") if value.respond_to?(:downcase)
+          argstr += "#{key}=#{value} "
+        end
+        argstr.chop!
+
+        cmd.gsub!("ARGS", argstr)
+
+        logger.info "R command line:\n#{cmd}"
+
+
+        system("rm -f #{rdir}/out")
+        stdout,stderr,error = run_cmd(cmd)
+
+        logger.info "stdout from r init job:\n#{stdout}"
+        logger.info "stderr from r init job:\n#{stderr}" if error
       end
-      argstr.chop!
-      
-      cmd.gsub!("ARGS", argstr)
-      
-      logger.info "R command line:\n#{cmd}"
       
       
-      system("rm -f #{rdir}/out")
-      stdout,stderr,error = run_cmd(cmd)
-      
-      logger.info "stdout from r init job:\n#{stdout}"
-      logger.info "stderr from r init job:\n#{stderr}" if error
-      
+      ##### return if true #####
       
       
       begin
@@ -150,7 +157,7 @@ module Util
     
   end
 
-  def fire_event(text, job, instance_name=nil)
+  def fire_event(text, job, instance_name=nil, public_ip=nil)
     id  = (job.is_a?(Fixnum)) ? job : job.id
     
     instance_id = nil
@@ -160,10 +167,10 @@ module Util
       instance_id = instance.id unless instance.nil?
     end
 
-    logger.info "firing event: #{text} on job #{id}, instance_id = #{instance_id}"
+    logger.info "firing event: #{text} on job #{id}, instance_id = #{instance_id}, public_ip = #{public_ip}"
 
     
-    e = Event.new(:text => text, :job_id => id, :instance_id => instance_id)
+    e = Event.new(:text => text, :job_id => id, :instance_id => instance_id, :public_ip => public_ip)
     e.save
   end
   
@@ -252,17 +259,44 @@ module Util
         get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       end
       cmd = "cd #{STATIC_FILES_FOLDER};zip -r job_#{job.id}.zip job_#{job.id}/"
+      zipfile = "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"
       stdout, stderr, error = run_cmd(cmd)
       if error
         puts "stderr creating zip:\n#{stderr}"
       end
       puts "stdout creating zip (#{cmd}) :\n#{stdout}"
+      # todo - remove job dir if zip was created successfully
+      unless (test(?s, zipfile).nil?)
+        puts "deleting directory..."
+        `rm -rf #{STATIC_FILES_FOLDER}/job_#{job.id}`
+      end
       url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
-      # todo - include size of file in email
-      Emailer.deliver_notify_success(url, job)
+      Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
       
     end
     
+    
+    
+  end
+  
+  
+  def handle_job_failure(job, event)
+    my_instance = Instance.find(event.instance_id)
+    my_instance.status = "failure"
+    my_instance.save
+    
+    Dir.mkdir(STATIC_FILES_FOLDER) unless (test(?d, STATIC_FILES_FOLDER))
+    jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
+
+    Dir.mkdir(jobdir) unless (test(?d, jobdir))
+    instance_dir = "#{jobdir}/instance_#{my_instance.id}"
+    Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
+    bucketname = "cspotrun-instance-bucket-#{my_instance.sir_id}"
+    get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+    tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
+    `rm #{instance_dir}/cmonkey.log.txt.gz`
+    `rmdir #{instance_dir}`
+    Emailer.deliver_notify_failure(job, event, tail)
     
     
   end

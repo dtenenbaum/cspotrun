@@ -94,18 +94,19 @@ class MainController < ApplicationController
   end
   
   def submit_job
-    @blanks = []
-    for item in params.values
-      @blanks << item if (item.respond_to?(:empty?) and item.empty?)
-    end
+    #@blanks = []
+    #for item in params.values
+    #  @blanks << item if (item.respond_to?(:empty?) and item.empty?)
+    #end
     
-#    @blanks = params.values.find_all{|i|i.empty?}
-    render :action => "fillinfields" and return false unless @blanks.empty?
-    # do some validation
-    # generate a project id
+    #render :action => "fillinfields" and return false unless @blanks.empty?
     
     @job = Job.new()
     
+    @job.user_supplied_rdata = (params[:preinitialized_rdata_file].respond_to?(:path)) ? true : false
+    
+    #render :text => params[:preinitialized_rdata_file].path and return false if true
+    #render :text => @job.user_supplied_rdata and return false if true
     
     @job.name = params['job_name']
     @job.price = params['price']
@@ -132,17 +133,35 @@ class MainController < ApplicationController
 
           
 
-        @job.ratios_file = "/tmp/ratios_#{@job.id}.txt"
-        
-        fileobj = params['uploaded_file']
+       if (@job.user_supplied_rdata)
+         fileobj = params[:preinitialized_rdata_file]
+         FileUtils.mv fileobj.path, "/tmp/initedEnv_#{@job.id}.RData"
+         
+         
+         #File.open("/tmp/initedEnv_#{@job.id}.RData", "wb") { |f| f.write(fileobj.read) }
 
-        puts "writing to #{@job.ratios_file}..."
 
-        File.open(@job.ratios_file, "w")  do |file|
-          while (line = fileobj.gets)
-            file.puts line
-          end
-        end
+       else
+         @job.ratios_file = "/tmp/ratios_#{@job.id}.txt" 
+
+         fileobj = params[:uploaded_file]
+
+         puts "writing to #{@job.ratios_file}..."
+
+         FileUtils.mv fileobj.path, @job.ratios_file
+
+         #File.open(@job.ratios_file, "wb") { |f| f.write(fileobj.read) }
+
+
+         #File.open(@job.ratios_file, "w")  do |file|
+           # todo change this to binary write because line endings may vary on different OS's
+           #while (line = fileobj.gets)
+          #   file.puts line
+          # end
+         #end
+         
+       end
+
         
 
         @job.save
@@ -165,7 +184,7 @@ class MainController < ApplicationController
     #end
     @events = Event.paginate_by_job_id @job.id, :page => params[:page], :order => 'created_at DESC'
     
-    flash['notice'] = "Your job has been submitted with ID #{@job.id}"
+    flash['notice'] = "Your job has been submitted with ID #{@job.id}. You will receive email when your job completes or fails."
     render(:action => "events", :job_id => @job.id) and return false
   end
   
