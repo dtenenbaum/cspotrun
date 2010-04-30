@@ -187,6 +187,10 @@ class MainController < ApplicationController
     flash['notice'] = "Your job has been submitted with ID #{@job.id}. You will receive email when your job completes or fails."
     render(:action => "events", :job_id => @job.id) and return false
   end
-  
+
+  def hose
+    ls = `ls`
+    render :text => "ls = #{ls}"
+  end
   
 end
