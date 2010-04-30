@@ -4,6 +4,7 @@ module Util
   require 'right_aws'
   require 'open3'
   require 'systemu'
+  require 'yaml'
   
   #unless (defined?(logger))
   #  logger.info "Setting logger"
@@ -25,7 +26,8 @@ module Util
   end
   
   def run_cmd(cmd)
-    logger.info "in run_cmd(), running command:\n#{cmd}"
+    safecmd = cmd.gsub(/pass=[*]&/, "pass=XXXX")
+    logger.info "in run_cmd(), running command:\n#{safecmd}"
     #stdin, stdout, stderr = Open3.popen3(cmd)
     status, stdout, stderr = systemu(cmd)
     #pretty_stderr = pretty_stream(stderr)
@@ -216,7 +218,32 @@ module Util
     create_bucket(get_job_bucket_name(job))
   end
   
+  def s3login
+    yaml = YAML::load_file("#{ENV['HOME']}/.s3conf/s3config.yml")
+    key = yaml['aws_access_key_id']
+    pass = yaml['aws_secret_access_key']
+    return key,pass
+  end
+  
+  def get_s3
+    key,pass = s3login
+    s3 = RightAws::S3.new(key,pass)
+  end
+  
   def create_bucket(name)
+    get_s3.bucket(name, true)
+  end
+  
+  def put_file(bucket, file, remotename=nil)
+    rname = (remotename.nil?) ? file.split("/").last : remotename
+    cmd = "s3cmd put #{file} s3://#{bucket}/#{rname}"
+    stdout, stderr, error, status = run_cmd(cmd)
+    logger.info "stdout:\n#{stdout}"
+    logger.info "stderr:\n#{stderr}"
+    logger.info "status: #{status}"
+  end
+  
+  def create_bucket_old(name)
     logger.info "Creating bucket #{name}"
     cmd = "s3cmd.rb createbucket #{name}"
     stdout, stderr, error = run_cmd(cmd)
@@ -226,12 +253,14 @@ module Util
   end
   
   def move_data_to_job_bucket(job, job_bucket)
-    cmd = "s3cmd.rb put #{get_job_bucket_name(job)}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
-    stdout, stderr, error = run_cmd(cmd)
-    if (error)
-      logger.info "stderr output moving data to job bucket:\n#{stderr}"
-    end
+    put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
+    #cmd = "s3cmd.rb put #{get_job_bucket_name(job)}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
+    #stdout, stderr, error = run_cmd(cmd)
+    #if (error)
+    #  logger.info "stderr output moving data to job bucket:\n#{stderr}"
+    #end
   end
+  
   
   def request_instances(job)
     cmd = job.command
@@ -243,6 +272,26 @@ module Util
     for line in lines
       #SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
       segs = line.split(/\s/)
+      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
+      i.save
+      fire_event("creating instance #{i.sir_id}", job)
+    end
+  end
+  
+  def request_instances_new(job)
+    cmd = job.command
+    querystring = '"'
+    querystring += "pass=cmonkeyRules&cmd=#{cmd.gsub(" ","+")}"
+    querystring += '"'
+    fullcmd = "curl -d  #{querystring} https://baliga.systemsbiology.net/cgi-bin/make-instance-request.rb"
+    stdout, stderr, error = run_cmd(fullcmd)
+    if (error)
+      logger.info "stderr output requesting instances:\n#{stderr}"
+    end
+    lines = stdout.split("\n")
+    for line in lines
+      ##SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
+      #segs = line.split(/\s/)
       i = Instance.new(:job_id => job.id, :sir_id => segs[1])
       i.save
       fire_event("creating instance #{i.sir_id}", job)
@@ -330,7 +379,17 @@ module Util
     
   end
   
+  
   def get_file_from_s3(bucketname, remotefile, localfile)
+    cmd = "s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
+    stdout,stderr,error = run_cmd(cmd)
+    if (error)
+      puts "stderr getting file from s3 (#{cmd}):\n#{stderr}"
+    end
+    puts "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+  end
+  
+  def get_file_from_s3_old(bucketname, remotefile, localfile)
     cmd = "s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
     if (error)
