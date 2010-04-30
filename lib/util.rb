@@ -24,6 +24,7 @@ module Util
   end
   
   def run_cmd(cmd)
+    logger.info "in run_cmd(), running command:\n#{cmd}"
     stdin, stdout, stderr = Open3.popen3(cmd)
     pretty_stderr = pretty_stream(stderr)
     pretty_stdout = pretty_stream(stdout)
