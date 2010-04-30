@@ -168,8 +168,12 @@ class MainController < ApplicationController
 
         @job.save
 
-
-        cmd = "rm -f #{RAILS_ROOT}/log/spawn.log && cd #{RAILS_ROOT} && ./script/runner SpawnJob #{@job.id} > #{RAILS_ROOT}/log/spawn.log 2>&1 &"
+        # todo - put this log in shared area on production
+        if (RAILS_ENV == 'production')
+          cmd = "rm -f #{LOG_LOC}/spawn.log && cd #{RAILS_ROOT} &&  #{RUBY_LOC}/ruby./script/runner SpawnJob #{@job.id} > #{LOG_LOC}/spawn.log 2>&1 &"
+        else
+          cmd = "rm -f #{RAILS_ROOT}/log/spawn.log && cd #{RAILS_ROOT} && ./script/runner SpawnJob #{@job.id} > #{RAILS_ROOT}/log/spawn.log 2>&1 &"
+        end
         puts "spawn command = \n#{cmd}"
         stdout, stderr, error  = run_cmd(cmd)
         if  (error)
