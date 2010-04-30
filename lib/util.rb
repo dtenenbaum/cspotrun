@@ -38,6 +38,7 @@ module Util
   
   def latest_price(instance_type)
     logger.info "getting latest price for #{instance_type}"
+    puts "getting latest price for #{instance_type} (i just loggered that)"
     timestamp = aws_timestamp(Time.now)
     cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
     stdout,stderr,error = run_cmd(cmd)
