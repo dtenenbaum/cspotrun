@@ -26,3 +26,4 @@ STATIC_FILES_FOLDER = "/path/to/cspotrun_output"
 STATIC_FILES_URL = "http://somehost.com/cspotrun_output"
 CMONKEY_WORKDIR = "/local/cmonkey/working_dir"
 EC2_TOOLS_HOME="" # must have trailing slash or be blank
+S3CMD_LOC="" # must have trailing slash or be blank

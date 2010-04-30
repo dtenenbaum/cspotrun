@@ -237,7 +237,7 @@ module Util
   
   
   def create_bucket(name)
-    cmd = "s3cmd mb s3://#{name}"
+    cmd = "#{S3CMD_LOC}s3cmd mb s3://#{name}"
     stdout, stderr, error, status = run_cmd(cmd)
     lputs "stdout:\n#{stdout}"
     lputs "stderr:\n#{stderr}"
@@ -250,7 +250,7 @@ module Util
   
   def put_file(bucket, file, remotename=nil)
     rname = (remotename.nil?) ? file.split("/").last : remotename
-    cmd = "s3cmd put #{file} s3://#{bucket}/#{rname}"
+    cmd = "#{S3CMD_LOC}s3cmd put #{file} s3://#{bucket}/#{rname}"
     stdout, stderr, error, status = run_cmd(cmd)
     lputs "stdout:\n#{stdout}"
     lputs "stderr:\n#{stderr}"
@@ -259,7 +259,7 @@ module Util
   
   def create_bucket_old(name)
     lputs "Creating bucket #{name}"
-    cmd = "s3cmd.rb createbucket #{name}"
+    cmd = "#{S3CMD_LOC}s3cmd.rb createbucket #{name}"
     stdout, stderr, error = run_cmd(cmd)
     if (error)
       lputs.info "stderr output creating bucket:\n#{stderr}"
@@ -395,7 +395,7 @@ module Util
   
   
   def get_file_from_s3(bucketname, remotefile, localfile)
-    cmd = "s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
+    cmd = "#{S3CMD_LOC}s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
     if (error)
       lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
@@ -404,7 +404,7 @@ module Util
   end
   
   def get_file_from_s3_old(bucketname, remotefile, localfile)
-    cmd = "s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
+    cmd = "#{S3CMD_LOC}s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
     if (error)
       lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
