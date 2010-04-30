@@ -128,7 +128,7 @@ class MainController < ApplicationController
         fire_event("starting job #{@job.name} (id #{@job.id})", @job)
         @job.user_data_file = "/tmp/user_data_#{@job.id}.txt"
 
-        @job.command = "ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
+        @job.command = "#{EC2_TOOLS_HOME}ec2-request-spot-instances --price #{params[:price]} --instance-count #{params[:num_instances]} " +
           "--instance-type #{params[:processor_type]} --key #{AWS_KEY} --type persistent --user-data-file #{@job.user_data_file} #{AMI_ID}"
 
           

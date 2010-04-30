@@ -4,3 +4,4 @@ config/database.yml
 log/*
 R/out
 data/cmonkey-init-hsa.RData
+mkmf.log
