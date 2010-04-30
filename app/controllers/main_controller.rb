@@ -203,7 +203,7 @@ class MainController < ApplicationController
 #    cmd = "ls"
 #    env = {}
 #    #stdout, stderr, error, status = run_cmd(cmd)
-    status, stdout, stderr = systemu(cmd, 'env' => env)
+    status, stdout, stderr = systemu(cmd)#, 'env' => env)
     render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
   end
   
