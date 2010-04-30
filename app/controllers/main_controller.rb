@@ -198,12 +198,12 @@ class MainController < ApplicationController
   
 
   def hose
-    cmd = "/local/ec2-api-tools-1.3-46266/bin/ec2-request-spot-instances --price 0.245 --instance-count 1 --instance-type c1.xlarge --key gsg-keypair --type persistent --user-data-file /tmp/user_data_7.txt ami-35c02e5c"
+    cmd = "EC2_HOME=/local/ec2-api-tools-1.3-46266 /local/ec2-api-tools-1.3-46266/bin/ec2-request-spot-instances --price 0.245 --instance-count 1 --instance-type c1.xlarge --key gsg-keypair --type persistent --user-data-file /tmp/user_data_7.txt ami-35c02e5c"
 #    cmd = "ec2-describe-spot-price-history --instance-type m1.large --start-time 2010-04-30T15:51:10.000Z"
 #    cmd = "ls"
     env = {}
 #    #stdout, stderr, error, status = run_cmd(cmd)
-    status, stdout, stderr = systemu(cmd, 'env' => env)
+    status, stdout, stderr = systemu(cmd)#, 'env' => env)
     render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
   end
   
