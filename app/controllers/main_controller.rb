@@ -25,16 +25,16 @@ class MainController < ApplicationController
   end
 
   def login
-    puts "in login, rm= #{request.method}"
+    lputs "in login, rm= #{request.method}"
     if (request.method == :post)
-      puts "method == post"
+      lputs "method == post"
       user = User.authenticate(params[:email], params[:password], false)
       if user == false
-        puts "invalid login"
+        lputs "invalid login"
         flash[:notice] = "Invalid Login"
         redirect_to :action => "login" and return false
       else
-        puts "valid login"
+        lputs "valid login"
         session[:user] = params['email']
         redirect_to :action => "welcome" and return false
       end
@@ -148,7 +148,7 @@ class MainController < ApplicationController
 
          fileobj = params[:uploaded_file]
 
-         puts "writing to #{@job.ratios_file}..."
+         lputs "writing to #{@job.ratios_file}..."
 
          FileUtils.mv fileobj.path, @job.ratios_file
 
@@ -174,12 +174,12 @@ class MainController < ApplicationController
         else
           cmd = "rm -f #{RAILS_ROOT}/log/spawn.log && cd #{RAILS_ROOT} && ./script/runner SpawnJob #{@job.id} > #{RAILS_ROOT}/log/spawn.log 2>&1 &"
         end
-        puts "spawn command = \n#{cmd}"
+        lputs "spawn command = \n#{cmd}"
         stdout, stderr, error  = run_cmd(cmd)
         if  (error)
-          puts "stderr output:\n#{stderr}"
+          lputs "stderr output:\n#{stderr}"
         end
-        puts "stdout output:\n#{stdout}"
+        lputs "stdout output:\n#{stdout}"
 
        ## spawn_job(@job)
 

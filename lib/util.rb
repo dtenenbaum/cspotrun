@@ -66,7 +66,7 @@ module Util
   def latest_price_old(instance_type)
     logger.info "getting latest price for #{instance_type}"
     logger.info "dante is a scrub"
-    puts "getting latest price for #{instance_type} (i just loggered that)"
+    lputs "getting latest price for #{instance_type} (i just loggered that)"
     timestamp = aws_timestamp(Time.now)
     cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
     #stdout = `#{cmd}`
@@ -97,6 +97,12 @@ module Util
      "#{utc.year}-#{"%02d" % utc.mon}-#{"%02d" % utc.mday}T#{"%02d" % utc.hour}:#{"%02d" % utc.min}:#{"%02d" % utc.sec}.000Z"
   end
   
+  
+  def lputs(message)
+    puts message
+    logger.info message
+  end
+  
   def spawn_job(job)
     # create init file
     logger.info "in spawn_job"
@@ -115,8 +121,7 @@ module Util
     
    ## thread = Thread.new() do
       # do the rest of this stuff in a thread
-      logger.info "hello from job submitting thread"
-      logger.info "hello from job submitting thread"
+      lputs "hello from job submitting thread"
       
       if (job.user_supplied_rdata)
         # no need to run R, we have a preinitialized RData file
@@ -146,14 +151,14 @@ module Util
 
         cmd.gsub!("ARGS", argstr)
 
-        logger.info "R command line:\n#{cmd}"
+        lputs "R command line:\n#{cmd}"
 
 
         system("rm -f #{rdir}/out")
         stdout,stderr,error = run_cmd(cmd)
 
-        logger.info "stdout from r init job:\n#{stdout}"
-        logger.info "stderr from r init job:\n#{stderr}" if error
+        lputs "stdout from r init job:\n#{stdout}"
+        lputs "stderr from r init job:\n#{stderr}" if error
       end
       
       
@@ -198,7 +203,7 @@ module Util
       instance_id = instance.id unless instance.nil?
     end
 
-    logger.info "firing event: #{text} on job #{id}, instance_id = #{instance_id}, public_ip = #{public_ip}"
+    lputs "firing event: #{text} on job #{id}, instance_id = #{instance_id}, public_ip = #{public_ip}"
 
     
     e = Event.new(:text => text, :job_id => id, :instance_id => instance_id, :public_ip => public_ip)
@@ -234,9 +239,9 @@ module Util
   def create_bucket(name)
     cmd = "s3cmd mb s3://#{name}"
     stdout, stderr, error, status = run_cmd(cmd)
-    logger.info "stdout:\n#{stdout}"
-    logger.info "stderr:\n#{stderr}"
-    logger.info "status: #{status}"
+    lputs "stdout:\n#{stdout}"
+    lputs "stderr:\n#{stderr}"
+    lputs "status: #{status}"
   end
   
   def create_bucket_medium_old(name)
@@ -247,17 +252,17 @@ module Util
     rname = (remotename.nil?) ? file.split("/").last : remotename
     cmd = "s3cmd put #{file} s3://#{bucket}/#{rname}"
     stdout, stderr, error, status = run_cmd(cmd)
-    logger.info "stdout:\n#{stdout}"
-    logger.info "stderr:\n#{stderr}"
-    logger.info "status: #{status}"
+    lputs "stdout:\n#{stdout}"
+    lputs "stderr:\n#{stderr}"
+    lputs "status: #{status}"
   end
   
   def create_bucket_old(name)
-    logger.info "Creating bucket #{name}"
+    lputs "Creating bucket #{name}"
     cmd = "s3cmd.rb createbucket #{name}"
     stdout, stderr, error = run_cmd(cmd)
     if (error)
-      logger.info "stderr output creating bucket:\n#{stderr}"
+      lputs.info "stderr output creating bucket:\n#{stderr}"
     end
   end
   
@@ -275,7 +280,7 @@ module Util
     cmd = job.command
     stdout, stderr, error = run_cmd(cmd)
     if (error)
-      logger.info "stderr output requesting instances:\n#{stderr}"
+      lputs "stderr output requesting instances:\n#{stderr}"
     end
     lines = stdout.split("\n")
     for line in lines
@@ -295,7 +300,7 @@ module Util
     fullcmd = "curl -d  #{querystring} https://baliga.systemsbiology.net/cgi-bin/make-instance-request.rb"
     stdout, stderr, error = run_cmd(fullcmd)
     if (error)
-      logger.info "stderr output requesting instances:\n#{stderr}"
+      lputs "stderr output requesting instances:\n#{stderr}"
     end
     lines = stdout.split("\n")
     for line in lines
@@ -321,7 +326,7 @@ module Util
   end
   
   def handle_job_completion(job, instance_id) #test with 70
-    puts "in Util.handle_job_completion, job id is #{job.id}"
+    lputs "in Util.handle_job_completion, job id is #{job.id}"
     
     my_instance = Instance.find(instance_id)
     
@@ -349,12 +354,12 @@ module Util
       zipfile = "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"
       stdout, stderr, error = run_cmd(cmd)
       if error
-        puts "stderr creating zip:\n#{stderr}"
+        lputs "stderr creating zip:\n#{stderr}"
       end
-      puts "stdout creating zip (#{cmd}) :\n#{stdout}"
+      lputs "stdout creating zip (#{cmd}) :\n#{stdout}"
       # todo - remove job dir if zip was created successfully
       unless (test(?s, zipfile).nil?)
-        puts "deleting directory..."
+        lputs "deleting directory..."
         `rm -rf #{STATIC_FILES_FOLDER}/job_#{job.id}`
       end
       url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
@@ -393,18 +398,18 @@ module Util
     cmd = "s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
     if (error)
-      puts "stderr getting file from s3 (#{cmd}):\n#{stderr}"
+      lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
     end
-    puts "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+    lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
   end
   
   def get_file_from_s3_old(bucketname, remotefile, localfile)
     cmd = "s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
     if (error)
-      puts "stderr getting file from s3 (#{cmd}):\n#{stderr}"
+      lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
     end
-    puts "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+    lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
   end
   
   
