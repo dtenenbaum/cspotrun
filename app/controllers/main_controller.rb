@@ -189,8 +189,7 @@ class MainController < ApplicationController
   end
 
   def hose
-    require 'systemu'
-    status, stdout, stderr = systemu "date"
+    stdout, stderr, error = run_cmd("date")
     render :text => "stdout = #{stdout}"
   end
   

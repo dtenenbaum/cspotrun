@@ -3,6 +3,7 @@ module Util
   require 'rubygems'
   require 'right_aws'
   require 'open3'
+  require 'systemu'
   
   #unless (defined?(logger))
   #  logger.info "Setting logger"
@@ -25,11 +26,14 @@ module Util
   
   def run_cmd(cmd)
     logger.info "in run_cmd(), running command:\n#{cmd}"
-    stdin, stdout, stderr = Open3.popen3(cmd)
-    pretty_stderr = pretty_stream(stderr)
-    pretty_stdout = pretty_stream(stdout)
-    error = pretty_stderr.empty?
-    return pretty_stdout,pretty_stderr,error
+    #stdin, stdout, stderr = Open3.popen3(cmd)
+    status, stdout, stderr = systemu(cmd)
+    #pretty_stderr = pretty_stream(stderr)
+    #pretty_stdout = pretty_stream(stdout)
+    #error = pretty_stderr.empty?
+    error = stderr.empty?
+    #return pretty_stdout,pretty_stderr,error,status
+    return stdout, stderr, error, status
   end
   
   def pretty_stream(stream)
