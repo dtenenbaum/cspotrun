@@ -276,7 +276,7 @@ module Util
   end
   
   
-  def request_instances(job)
+  def request_instances_old(job)
     cmd = job.command
     stdout, stderr, error = run_cmd(cmd)
     if (error)
@@ -292,7 +292,7 @@ module Util
     end
   end
   
-  def request_instances_new(job)
+  def request_instances(job)
     cmd = job.command
     querystring = '"'
     querystring += "pass=cmonkeyRules&cmd=#{cmd.gsub(" ","+")}"
