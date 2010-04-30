@@ -41,7 +41,27 @@ module Util
     arr.join()
   end
   
+  
   def latest_price(instance_type)
+    timestamp = aws_timestamp(Time.now)
+    url = "http://baliga.systemsbiology.net/cgi-bin/get-pricing-info.rb?instance-type=#{instance_type}&start-time=#{timestamp}"
+    cmd = "curl -s \"#{url}\""
+    stdout,stderr,error = run_cmd(cmd)
+    if error
+      logger.info "oops, an error:"
+      logger.info stderr
+    end
+    logger.info "result:"
+    logger.info stdout
+    lines = stdout.split("\n")
+    for line in lines
+      next if line.downcase =~ /windows/
+      segs = line.split(/\s/)
+      return segs[1].to_f
+    end
+  end
+  
+  def latest_price_old(instance_type)
     logger.info "getting latest price for #{instance_type}"
     logger.info "dante is a scrub"
     puts "getting latest price for #{instance_type} (i just loggered that)"

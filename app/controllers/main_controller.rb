@@ -7,6 +7,8 @@ class MainController < ApplicationController
   require 'rubygems'
   require 'will_paginate'
   
+  require 'systemu'
+  
   include Util
 
   Time.zone = "Pacific Time (US & Canada)"
@@ -187,11 +189,16 @@ class MainController < ApplicationController
     flash['notice'] = "Your job has been submitted with ID #{@job.id}. You will receive email when your job completes or fails."
     render(:action => "events", :job_id => @job.id) and return false
   end
+  
+  
+  
 
   def hose
     cmd = "ec2-describe-spot-price-history --instance-type m1.large --start-time 2010-04-30T15:51:10.000Z"
-    #cmd = "ls"
-    stdout, stderr, error, status = run_cmd(cmd)
+    cmd = "ls"
+    env = {}
+    #stdout, stderr, error, status = run_cmd(cmd)
+    status, stdout, stderr = systemu(cmd, 'env' => env)
     render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
   end
   
