@@ -230,7 +230,16 @@ module Util
     s3 = RightAws::S3.new(key,pass)
   end
   
+  
   def create_bucket(name)
+    cmd = "s3cmd mb s3://#{name}"
+    stdout, stderr, error, status = run_cmd(cmd)
+    logger.info "stdout:\n#{stdout}"
+    logger.info "stderr:\n#{stderr}"
+    logger.info "status: #{status}"
+  end
+  
+  def create_bucket_medium_old(name)
     get_s3.bucket(name, true)
   end
   
