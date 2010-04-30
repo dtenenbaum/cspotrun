@@ -80,6 +80,8 @@ jQuery(document).ready(function() {
        jQuery("#more_info").hide();
    });
    
+   jQuery("#please_wait").hide();
+   
   jQuery("#submit_job").submit(function(){
       log("in submit function");
       var usingRatios = false;
@@ -119,6 +121,12 @@ jQuery(document).ready(function() {
       if (!valid) {
           alert(msg);
       }
+      if(valid) { 
+          jQuery("#please_wait").show();
+          jQuery("#submit_new_job_button").attr("disabled","disabled");
+      }
+      
+      
       return (valid);
    });
 

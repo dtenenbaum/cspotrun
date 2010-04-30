@@ -77,7 +77,6 @@ Rails::Initializer.run do |config|
   AWS_SECRET_KEY = "yyy"
   AWS_KEY  = "my-keypair"
   AMI_ID = "my_ami_id"
-  CMONKEY_WORKDIR = "/my/cmonkey/workdir"
   SYSADMIN_EMAIL = "my@email.address"
 end
 

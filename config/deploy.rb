@@ -110,13 +110,19 @@ task :post_update_code_hook do
  local_rails_root = `pwd`
  run "echo '__BEGINNING OF after_update_code recipe'"
  
+ 
+ RAILS_ROOT = "."
+ 
  #run "echo #{shared_dir} #{shared_path}"
- run "cp #{shared_path}/config/environment.rb #{release_path}/config/environment.rb"
+ 
+ upload "#{RAILS_ROOT}/config/environment.rb", "#{release_path}/config", :via => :scp
+ 
+ 
  ['development','production','test'].each do |i|
-   run "cp #{shared_path}/config/environments/#{i}.rb #{release_path}/config/environments/#{i}.rb"
+   upload "#{RAILS_ROOT}/config/environments/#{i}.rb", "#{release_path}/config/environments/#{i}.rb", :via => :scp
  end
- run "cp #{shared_path}/config/boot.rb #{release_path}/config/boot.rb"
- run "cp #{shared_path}/config/database.yml #{release_path}/config/database.yml"
+ #run "cp #{shared_path}/config/boot.rb #{release_path}/config/boot.rb"
+ upload "#{RAILS_ROOT}/config/database.yml", "#{release_path}/config/database.yml", :via => :scp
  run "mv #{release_path}/app/controllers/application.rb #{release_path}/app/controllers/application_controller.rb"
  run "mkdir #{release_path}/public/test"
 

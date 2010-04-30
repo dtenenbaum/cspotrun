@@ -3,3 +3,4 @@ config/environments/*.rb
 config/database.yml
 log/*
 R/out
+data/cmonkey-init-hsa.RData
