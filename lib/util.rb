@@ -47,9 +47,9 @@ module Util
     puts "getting latest price for #{instance_type} (i just loggered that)"
     timestamp = aws_timestamp(Time.now)
     cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
-    stdout = `#{cmd}`
-    error = false
-    #stdout,stderr,error = run_cmd(cmd)
+    #stdout = `#{cmd}`
+    #error = false
+    stdout,stderr,error = run_cmd(cmd)
     if error
       logger.info "oops, an error:"
       logger.info stderr

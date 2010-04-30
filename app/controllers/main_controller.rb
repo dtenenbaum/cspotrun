@@ -189,8 +189,10 @@ class MainController < ApplicationController
   end
 
   def hose
-    stdout, stderr, error = run_cmd("date")
-    render :text => "stdout = #{stdout}"
+    cmd = "ec2-describe-spot-price-history --instance-type m1.large --start-time 2010-04-30T15:51:10.000Z"
+    #cmd = "ls"
+    stdout, stderr, error, status = run_cmd(cmd)
+    render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
   end
   
 end
