@@ -294,7 +294,7 @@ module Util
     lines = stdout.split("\n")
     for line in lines
       ##SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
-      #segs = line.split(/\s/)
+      segs = line.split(/\s/)
       i = Instance.new(:job_id => job.id, :sir_id => segs[1])
       i.save
       fire_event("creating instance #{i.sir_id}", job)
