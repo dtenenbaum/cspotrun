@@ -32,7 +32,7 @@ class ConsumeMessages
     else
       puts message
       puts
-      message.delete
+      #######message.delete
     end
     
     sleep 1

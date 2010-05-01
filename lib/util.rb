@@ -6,28 +6,23 @@ module Util
   require 'systemu'
   require 'yaml'
   
-  #unless (defined?(logger))
-  #  logger.info "Setting logger"
-  #  ##logger = Rails.logger
-  #  logger = RAILS_DEFAULT_LOGGER
-  #end
   
   def logger
     Rails.logger
   end
   
   def self.atest
-    logger.info "a test"
+    lputs "a test"
   end
   
   
   def do_nothing
-    logger.info "does this count as nothing?"
+    lputs "does this count as nothing?"
   end
   
   def run_cmd(cmd)
     safecmd = cmd.gsub(/pass=[*]&/, "pass=XXXX")
-    logger.info "in run_cmd(), running command:\n#{safecmd}"
+    lputs "in run_cmd(), running command:\n#{safecmd}"
     #stdin, stdout, stderr = Open3.popen3(cmd)
     status, stdout, stderr = systemu(cmd)
     #pretty_stderr = pretty_stream(stderr)
@@ -50,11 +45,11 @@ module Util
     cmd = "curl -s \"#{url}\""
     stdout,stderr,error = run_cmd(cmd)
     if error
-      logger.info "oops, an error:"
-      logger.info stderr
+      lputs "oops, an error:"
+      lputs stderr
     end
-    logger.info "result:"
-    logger.info stdout
+    lputs "result:"
+    lputs stdout
     lines = stdout.split("\n")
     for line in lines
       next if line.downcase =~ /windows/
@@ -64,20 +59,18 @@ module Util
   end
   
   def latest_price_old(instance_type)
-    logger.info "getting latest price for #{instance_type}"
-    logger.info "dante is a scrub"
-    lputs "getting latest price for #{instance_type} (i just loggered that)"
+    lputs "getting latest price for #{instance_type}"
     timestamp = aws_timestamp(Time.now)
     cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
     #stdout = `#{cmd}`
     #error = false
     stdout,stderr,error = run_cmd(cmd)
     if error
-      logger.info "oops, an error:"
-      logger.info stderr
+      lputs "oops, an error:"
+      lputs stderr
     else
-      logger.info "result:"
-      logger.info stdout
+      lputs "result:"
+      lputs stdout
       lines = stdout.split("\n")
       for line in lines
         next if line.downcase =~ /windows/
@@ -105,7 +98,7 @@ module Util
   
   def spawn_job(job)
     # create init file
-    logger.info "in spawn_job"
+    lputs "in spawn_job"
     
     fire_event("spawning init job", job)
     
@@ -183,8 +176,8 @@ module Util
         create_instance_buckets(job)
 
       rescue Exception => ex
-        logger.info ex.message
-        logger.info ex.backtrace
+        lputs ex.message
+        lputs ex.backtrace
       end
 
       
@@ -211,7 +204,7 @@ module Util
   end
   
   def utiltest
-    logger.info "in test"
+    lputs "in test"
   end
   
   def get_job_bucket_name(job)
@@ -268,11 +261,6 @@ module Util
   
   def move_data_to_job_bucket(job, job_bucket)
     put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
-    #cmd = "s3cmd.rb put #{get_job_bucket_name(job)}:initedEnv.RData /tmp/initedEnv_#{job.id}.RData"
-    #stdout, stderr, error = run_cmd(cmd)
-    #if (error)
-    #  logger.info "stderr output moving data to job bucket:\n#{stderr}"
-    #end
   end
   
   
@@ -302,6 +290,7 @@ module Util
     if (error)
       lputs "stderr output requesting instances:\n#{stderr}"
     end
+    lputs "result = \n#{stdout}"
     lines = stdout.split("\n")
     for line in lines
       ##SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default

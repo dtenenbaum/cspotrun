@@ -39,8 +39,16 @@ class MessageListener
   #  update - that has been dealt with by putting the name of the originating host in the message and ignoring messages not so marked.
   
   #logger.info("startup class, main thread")
+  
+  
+def lputs(msg)
+  logger = RAILS_DEFAULT_LOGGER
+  logger.info msg
+  puts msg
+end
+  
 def start
-  puts("startup class, in main thread")
+  lputs("startup class, in main thread")
   hostname = `hostname`.chomp()
   sqs, queue1 = start_queue()
   
@@ -58,15 +66,15 @@ def start
           
           if (bodyhash['user_data_originating_host'] == hostname)
 
-            puts "message id = #{message.id}"
-            puts "sent at = #{message.sent_at}"
-            puts "received at = #{message.received_at}"
-            puts "message body:"
+            lputs "message id = #{message.id}"
+            lputs "sent at = #{message.sent_at}"
+            lputs "received at = #{message.received_at}"
+            lputs "message body:"
 
 
-            puts message.body
+            lputs message.body
 
-            puts "bodyhash:"
+            lputs "bodyhash:"
 
             pp bodyhash 
             job_id = bodyhash['user_data_job_id']
@@ -76,16 +84,16 @@ def start
 
             
             
-            puts "deleting message"
+            lputs "deleting message"
             message.delete 
           else
-            #puts "ignoring message"
+            puts "got a message for someone else"
           end
           
         end
       rescue Exception => ex
-        puts "exception, trying to restart queue"
-        puts ex.message
+        lputs "exception, trying to restart queue"
+        lputs ex.message
         sqs, queue1 = start_queue()
       end
       

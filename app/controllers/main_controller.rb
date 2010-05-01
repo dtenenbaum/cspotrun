@@ -168,6 +168,8 @@ class MainController < ApplicationController
 
         @job.save
 
+        puts "ENV['RAILS_ENV'] = #{ENV['RAILS_ENV']}"
+
         # todo - put this log in shared area on production
         if (RAILS_ENV == 'production')
           cmd = "rm -f #{LOG_LOC}/spawn.log && cd #{RAILS_ROOT} &&  #{RUBY_LOC} ./script/runner SpawnJob #{@job.id} > #{LOG_LOC}/spawn.log 2>&1 &"
