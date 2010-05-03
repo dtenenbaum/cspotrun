@@ -5,3 +5,5 @@ log/*
 R/out
 data/cmonkey-init-hsa.RData
 mkmf.log
+data/hsa_200iters.RData
+yeast.ratios.txt

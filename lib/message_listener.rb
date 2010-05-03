@@ -64,6 +64,9 @@ def start
           
           bodyhash = YAML::load message.body
           
+          
+          puts "originating host = #{bodyhash['user_data_originating_host']}"
+          
           if (bodyhash['user_data_originating_host'] == hostname)
 
             lputs "message id = #{message.id}"

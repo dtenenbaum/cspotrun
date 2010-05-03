@@ -82,6 +82,7 @@ class MainController < ApplicationController
   
   
   def my_jobs
+    lputs("current user is: #{session[:user]}")
     @jobs = Job.paginate_by_email session[:user], :page => params[:page], :order => 'created_at DESC'
     render :action => "jobs"
   end
