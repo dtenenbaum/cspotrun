@@ -174,6 +174,7 @@ module Util
         fire_event("creating instance buckets",job)
 
         create_instance_buckets(job)
+        lputs "done with spawning job #{job.id}"
 
       rescue Exception => ex
         lputs ex.message
@@ -209,7 +210,7 @@ module Util
   
   def get_job_bucket_name(job)
     hostname = safe_bucket_name(`hostname`.chomp())
-    "cspotrun-job-bucket-#{hostname}-#{job.id}"
+    "isb-cspotrun-job-bucket-#{hostname}-#{job.id}"
   end
 
   def create_job_bucket(job)
@@ -313,7 +314,7 @@ module Util
   
   def create_instance_buckets(job)
     for instance in job.instances
-      name = "cspotrun-instance-bucket-#{instance.sir_id}"
+      name = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
       create_bucket(name)
       fire_event("creating instance bucket #{name}", job)
     end
@@ -344,7 +345,7 @@ module Util
       instances.each_with_index do |instance, i|
         instance_dir = "#{jobdir}/instance_#{i+1}"
         Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-        bucketname = "cspotrun-instance-bucket-#{instance.sir_id}"
+        bucketname = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
         get_file_from_s3(bucketname, "complete.image.RData", "#{instance_dir}/complete.image.RData")
         get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       end
@@ -381,7 +382,7 @@ module Util
     Dir.mkdir(jobdir) unless (test(?d, jobdir))
     instance_dir = "#{jobdir}/instance_#{my_instance.id}"
     Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-    bucketname = "cspotrun-instance-bucket-#{my_instance.sir_id}"
+    bucketname = "isb-cspotrun-instance-bucket-#{my_instance.sir_id}"
     get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
     tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
     `rm #{instance_dir}/cmonkey.log.txt.gz`
