@@ -17,7 +17,7 @@ Events:<br/>
 <% for event in @events %>
   <tr>
     <td><%= event.text %></td>
-    <td><%= (event.instance_id.nil?) ? "" : event.instance_id%></td>
+    <td><%= (event.instance_id.nil?) ? "" : event.instance.sir_id%></td>
     <td><%= event.created_at %></td>
   </tr>
 <% end %>

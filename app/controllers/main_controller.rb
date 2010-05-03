@@ -96,7 +96,7 @@ class MainController < ApplicationController
   def events
     #puts "timezone = #{Time.zone}"
     
-    @events = Event.paginate_by_job_id params['job_id'], :page => params[:page], :order => 'created_at DESC'
+    @events = Event.paginate_by_job_id params['job_id'], :include => :instance, :page => params[:page], :order => 'created_at DESC'
   end
   
   def submit_job
