@@ -7,3 +7,5 @@ data/cmonkey-init-hsa.RData
 mkmf.log
 data/hsa_200iters.RData
 yeast.ratios.txt
+data/*ratios.txt
+data/*.RData
