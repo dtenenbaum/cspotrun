@@ -21,7 +21,7 @@ module Util
   end
   
   def run_cmd(cmd)
-    safecmd = cmd.gsub(/pass=[*]&/, "pass=XXXX")
+    safecmd = cmd.gsub(CSPOTRUN_PASS, "--secret-password--")
     lputs "in run_cmd(), running command:\n#{safecmd}"
     #stdin, stdout, stderr = Open3.popen3(cmd)
     status, stdout, stderr = systemu(cmd)
@@ -263,8 +263,16 @@ module Util
     put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
   end
   
+  def request_instances(job)
+    if RAILS_ENV == 'production'
+      request_instances_remote(job)
+    else
+      request_instances_local(job)
+    end
+  end
   
-  def request_instances_old(job)
+  
+  def request_instances_local(job)
     cmd = job.command
     stdout, stderr, error = run_cmd(cmd)
     if (error)
@@ -280,16 +288,17 @@ module Util
     end
   end
   
-  def request_instances(job)
+  def request_instances_remote(job)
     cmd = job.command
     querystring = '"'
-    querystring += "pass=cmonkeyRules&cmd=#{cmd.gsub(" ","+")}"
+    querystring += "pass=#{CSPOTRUN_PASS}&cmd=#{cmd.gsub(" ","+")}"
     querystring += '"'
     fullcmd = "curl -d  #{querystring} https://baliga.systemsbiology.net/cgi-bin/make-instance-request.rb"
     stdout, stderr, error = run_cmd(fullcmd)
     if (error)
       lputs "stderr output requesting instances:\n#{stderr}"
     end
+    lputs "length of stdout: #{stdout.length}"
     lputs "result = \n#{stdout}"
     lines = stdout.split("\n")
     for line in lines

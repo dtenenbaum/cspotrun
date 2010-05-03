@@ -78,16 +78,8 @@ Rails::Initializer.run do |config|
   AWS_KEY  = "my-keypair"
   AMI_ID = "my_ami_id"
   SYSADMIN_EMAIL = "my@email.address"
+  CSPOTRUN_PASS = "somePassword"
 end
 
 
-Dispatcher.to_prepare do
-  if (ENV.has_key?('CSPOTRUN_PREPARED'))
-    # do nothing
-  else
-    ENV['CSPOTRUN_PREPARED'] = 'true'
-    puts "it feels like the first time"
-    # start polling for SQS messages
-    include Startup
-  end
-end
+

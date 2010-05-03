@@ -8,6 +8,9 @@ class MainController < ApplicationController
   require 'will_paginate'
   
   require 'systemu'
+
+  filter_parameter_logging :password
+
   
   include Util
 
