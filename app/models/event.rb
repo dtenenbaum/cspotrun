@@ -5,6 +5,7 @@ class Event < ActiveRecord::Base
   
   include Util
   
+  
   after_save :handle_after_save
   
   def handle_after_save
