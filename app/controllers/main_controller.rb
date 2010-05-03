@@ -123,7 +123,7 @@ class MainController < ApplicationController
     @job.organism = params['organism']
     @job.project = params['project']
     @job.is_test_run = (params['is_test_run'] == 'true') ? true : false
-    @job.email = session['user']
+    @job.email = session[:user]
     @job.n_iter = params['n_iter']
 
     #begin
