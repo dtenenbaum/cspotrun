@@ -131,7 +131,7 @@ module Util
 
 
         rdir = "#{RAILS_ROOT}/R"
-        cmd = "R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R #{rdir}/out"
+        cmd = "#{R_LOC}R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R #{rdir}/out"
 
 
         argstr = ""

@@ -34,3 +34,4 @@ EC2_TOOLS_HOME="" # must have trailing slash or be blank
 LOG_LOC="/local/rails_apps/cspotrun/shared/log"
 RUBY_LOC="/local/ruby/bin/ruby"
 S3CMD_LOC="/local/s3cmd/" # must have trailing slash or be blank
+R_LOC="/local/R/" # must have trailing slash or be blank
