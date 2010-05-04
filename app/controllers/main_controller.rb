@@ -95,7 +95,6 @@ class MainController < ApplicationController
   
   def events
     #puts "timezone = #{Time.zone}"
-    
     @events = Event.paginate_by_job_id params['job_id'], :include => :instance, :page => params[:page], :order => 'created_at DESC'
   end
   
@@ -196,7 +195,7 @@ class MainController < ApplicationController
     #end
     @events = Event.paginate_by_job_id @job.id, :page => params[:page], :order => 'created_at DESC'
     
-    flash['notice'] = "Your job has been submitted with ID #{@job.id}. You will receive email when your job completes or fails."
+    flash[:notice] = "Your job has been submitted with ID #{@job.id}. You will receive email when your job completes or fails."
     render(:action => "events", :job_id => @job.id) and return false
   end
   
