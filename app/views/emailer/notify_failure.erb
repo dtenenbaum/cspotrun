@@ -1,6 +1,15 @@
+
+
+
+<% if @instance.nil? %>
+  CSpotRun job <%= @job.id %>, "<%= @job.name %>" has failed!
+  
+<% else %>
+  
+  
 An instance of job #<%=@job.id%>, "<%= @job.name %>" has failed!
 
-<% unless @instance.nil? %>
+
 The instance id is <%= @instance.id %>, the spot instance request name is <%= @instance.sir_id %>.
 <% end %>
 
