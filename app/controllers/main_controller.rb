@@ -38,6 +38,8 @@ class MainController < ApplicationController
         redirect_to :action => "login" and return false
       else
         lputs "valid login"
+        user.updated_at = Time.now
+        user.save
         session[:user] = params['email']
         redirect_to :action => "welcome" and return false
       end
