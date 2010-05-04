@@ -131,7 +131,7 @@ module Util
 
 
         rdir = "#{RAILS_ROOT}/R"
-        cmd = "#{R_LOC}R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R #{rdir}/out"
+        cmd = "#{R_LOC}R CMD BATCH -q --vanilla --no-save --no-restore '--args ARGS' #{rdir}/initenv.R /tmp/initenv_#{job.id}.out"
 
 
         argstr = ""
@@ -147,11 +147,17 @@ module Util
         lputs "R command line:\n#{cmd}"
 
 
-        system("rm -f #{rdir}/out")
-        stdout,stderr,error = run_cmd(cmd)
+        #system("rm -f #{rdir}/out")
+        stdout,stderr,error,status = run_cmd(cmd)
+        #todo - see if there was an error initializing the RData file and if so, tell the user and abort. there is no point continuing.
 
         lputs "stdout from r init job:\n#{stdout}"
         lputs "stderr from r init job:\n#{stderr}" if error
+        lputs "status from r init job:\n#{status}"
+        if (status.exited? and status.exitstatus != 0)
+          fire_event("error:error initializing RData file!", job)
+          return
+        end
       end
       
       
@@ -372,21 +378,26 @@ module Util
   
   
   def handle_job_failure(job, event)
-    my_instance = Instance.find(event.instance_id)
-    my_instance.status = "failure"
-    my_instance.save
-    
-    Dir.mkdir(STATIC_FILES_FOLDER) unless (test(?d, STATIC_FILES_FOLDER))
-    jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
+    tail = nil
+    unless (event.instance_id.nil?)
+      my_instance = Instance.find(event.instance_id)
+      my_instance.status = "failure"
+      my_instance.save
+      Dir.mkdir(STATIC_FILES_FOLDER) unless (test(?d, STATIC_FILES_FOLDER))
+      jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
 
-    Dir.mkdir(jobdir) unless (test(?d, jobdir))
-    instance_dir = "#{jobdir}/instance_#{my_instance.id}"
-    Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-    bucketname = "isb-cspotrun-instance-bucket-#{my_instance.sir_id}"
-    get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
-    tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
-    `rm #{instance_dir}/cmonkey.log.txt.gz`
-    `rmdir #{instance_dir}`
+      Dir.mkdir(jobdir) unless (test(?d, jobdir))
+      instance_dir = "#{jobdir}/instance_#{my_instance.id}"
+      Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
+      # todo - be a little more bulletproof here. there may not always be an instance bucket or log file in said bucket. 
+
+      bucketname = "isb-cspotrun-instance-bucket-#{my_instance.sir_id}"
+      get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+      tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
+      `rm #{instance_dir}/cmonkey.log.txt.gz`
+      `rmdir #{instance_dir}`
+    end
+    
     Emailer.deliver_notify_failure(job, event, tail)
     
     

@@ -1,6 +1,12 @@
 An instance of job #<%=@job.id%>, "<%= @job.name %>" has failed!
 
+<% unless @instance.nil? %>
 The instance id is <%= @instance.id %>, the spot instance request name is <%= @instance.sir_id %>.
+<% end %>
+
+The error message was: <%= @event.text %>
+
+<% unless @tail.nil? %>
 
 You can connect to this instance to determine the cause of this problem. The instance will be shut down within
 10 minutes unless you (do some as yet unspecified action). 
@@ -11,3 +17,4 @@ The last 200 lines of the log file follow.
 
 <%= @tail %>
 
+<% end %>
