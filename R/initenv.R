@@ -17,6 +17,13 @@ if (length(args) == 0) {
 }
 
 
+if (exists("n.iter")) {
+    n.iter.saved = n.iter
+    rm(n.iter)
+} else {
+    n.iter.saved <- 2001
+    
+}
 
 
 for (i in 1:length(args)) {
@@ -30,9 +37,6 @@ if (!exists("k.clust")) {
     k.clust <- 200
 }
 
-if (!exists("n.iter")) {
-    n.iter <- 2001
-}
 
 
 setwd(cmonkey.workdir)
@@ -57,7 +61,8 @@ e$cm.func.each.iter <- cm.func.each.iter
 
 e <- cmonkey.init(e, organism=organism, plot.iters=0, k.clust=k.clust, parallel.cores=parallel.cores)
 
-e$n.iter <- n.iter
+
+e$n.iter <- n.iter.saved
 
 parallel.cores <- pc
 e$parallel.cores <- parallel.cores
