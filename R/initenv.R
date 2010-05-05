@@ -34,6 +34,7 @@ if (!exists("n.iter")) {
     n.iter <- 3000
 }
 
+
 setwd(cmonkey.workdir)
 
 ratios = read.delim(ratios.file, row.names=1)
@@ -50,6 +51,7 @@ cm.func.each.iter = function() {
 }
 
 e = new.env()
+
 
 e$cm.func.each.iter <- cm.func.each.iter
 
