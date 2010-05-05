@@ -31,7 +31,7 @@ if (!exists("k.clust")) {
 }
 
 if (!exists("n.iter")) {
-    n.iter <- 3000
+    n.iter <- 2001
 }
 
 
@@ -56,6 +56,8 @@ e = new.env()
 e$cm.func.each.iter <- cm.func.each.iter
 
 e <- cmonkey.init(e, organism=organism, plot.iters=0, k.clust=k.clust, parallel.cores=parallel.cores)
+
+e$n.iter <- n.iter
 
 parallel.cores <- pc
 e$parallel.cores <- parallel.cores
