@@ -1,7 +1,23 @@
 
 
+
+
 <% job_id = (params[:job_id]) ? params[:job_id] : @job.id %>
 
+<% @job = Job.find(job_id) %>
+
+<h2>Events for Job  number <%=@job.id%> (<%=@job.name%>)</h2>
+Number of instances: <%=@job.num_instances%> <br/>
+Price: $<%= @job.price %><br/>
+Instance type: <%= @job.instance_type %><br/>
+Owner: <%= @job.email %><br/>
+Organism: <%= @job.organism %><br/>
+Project: <%= @job.project %><br/>
+Started: <%= @job.created_at %><br/>
+Data source: <%= (@job.user_supplied_rdata) ? "Prenitialized RData file" : "ratios file" %><br/>
+
+
+<br/>
 <%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => job_id)) %><br/>
 
 Events:<br/>

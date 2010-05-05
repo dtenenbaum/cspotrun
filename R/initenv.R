@@ -18,11 +18,10 @@ if (length(args) == 0) {
 
 
 if (exists("n.iter")) {
-    n.iter.saved = n.iter
+    n.iter.saved <- n.iter
     rm(n.iter)
 } else {
     n.iter.saved <- 2001
-    
 }
 
 
