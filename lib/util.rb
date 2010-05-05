@@ -15,6 +15,9 @@ module Util
     lputs "a test"
   end
   
+  def rc(cmd)
+    #ec2-describe-spot-price-history --instance-type c1.xlarge --start-time 2008-05-04T13:53:45-0800 -d Linux/UNIX
+  end
   
   def do_nothing
     lputs "does this count as nothing?"

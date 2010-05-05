@@ -2,13 +2,16 @@
 
 
 
-My Jobs:<br/>
+<%= (@all) ? "All Jobs" : "My Jobs" %>:<br/>
 
 
 <table>
   <tr>
     <th>ID</th>
     <th>Name</th>
+<% if @all %> 
+	<th>Email</th>
+<% end %>
     <th>Time Started</th>
   </tr>
 
@@ -16,6 +19,9 @@ My Jobs:<br/>
   <tr>
     <td><%= link_to job.id, :action => "events", :job_id => job.id %></td>
     <td><%= job.name %></td>
+<% if @all %>
+	<td><%= job.email %></td>
+<% end %>
     <td><%= job.created_at %></td>
   </tr>
 <% end %>

@@ -85,11 +85,13 @@ class MainController < ApplicationController
   
   def my_jobs
     lputs("current user is: #{session[:user]}")
+    @all = false
     @jobs = Job.paginate_by_email session[:user], :page => params[:page], :order => 'created_at DESC'
     render :action => "jobs"
   end
   
   def all_jobs
+    @all = true
     @jobs = Job.paginate :page => params[:page], :order => 'created_at DESC'
     render :action => "jobs"
   end
