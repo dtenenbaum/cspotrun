@@ -44,7 +44,7 @@ module Util
   
   
   def latest_price()
-    result = EC2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
+    result = @ec2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
     c1_xlarge = 0.0
     m1_large = 0.0
     for item in result
@@ -235,7 +235,7 @@ module Util
   def get_job_status(job)
     instances = job.instances
     return nil if instances.nil? or instances.empty?
-    unfiltered_instance_request_results = EC2.describe_spot_instance_requests
+    unfiltered_instance_request_results = @ec2.describe_spot_instance_requests
     #lputs "raw sir results:"
     #pp unfiltered_instance_request_results
     instance_request_results = []
@@ -251,7 +251,7 @@ module Util
     end
     
     
-    instance_results = EC2.describe_instances(list_of_instances)
+    instance_results = @ec2.describe_instances(list_of_instances)
     
     #lputs "sir results:"
     #pp instance_request_results
@@ -297,7 +297,7 @@ module Util
       :key_name => AWS_KEY, :type => "persistent", :user_data => user_data}
     lputs "args = "
     pp args
-    results = EC2.request_spot_instances args
+    results = @ec2.request_spot_instances args
     pp results
     for result in results
       i = Instance.new(:job_id => job.id, :sir_id => result[:spot_instance_request_id])
@@ -411,11 +411,15 @@ module Util
   end
   
   def kill_requests(*ids)
-    EC2.cancel_spot_instance_requests(ids)
+    @ec2.cancel_spot_instance_requests(ids)
   end
   
   def kill_instances(*ids)
-    EC2.terminate_instances(ids)
+    @ec2.terminate_instances(ids)
+  end
+  
+  def ec2()
+    RightAws::Ec2.new(AWS_ACCOUNT_KEY, AWS_SECRET_KEY)
   end
   
   

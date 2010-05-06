@@ -12,7 +12,10 @@ class MainController < ApplicationController
   filter_parameter_logging :password
 
   
+  
   include Util
+
+
 
   Time.zone = "Pacific Time (US & Canada)"
 
@@ -22,6 +25,7 @@ class MainController < ApplicationController
 #  end
 
   def authorize
+    @ec2 = ec2() if @ec2.nil?
     if (session[:user].nil? or session[:user].empty?)
       redirect_to :action => "login" and return false
     end
