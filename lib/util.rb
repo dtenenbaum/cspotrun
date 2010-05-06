@@ -42,7 +42,24 @@ module Util
   end
   
   
-  def latest_price(instance_type)
+  def latest_price()
+    timestamp = aws_timestamp(Time.now)
+    result = EC2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
+    c1_xlarge = 0.0
+    m1_large = 0.0
+    for item in result
+      if (item[:instance_type] == 'c1.xlarge')
+        c1_xlarge = item[:spot_price]
+      end
+      if(item[:instance_type] == 'm1.large')
+        m1_large = item[:spot_price]
+      end
+    end
+    pp result
+    return c1_xlarge, m1_large
+  end
+  
+  def latest_price_viejo(instance_type)
     timestamp = aws_timestamp(Time.now)
     url = "http://baliga.systemsbiology.net/cgi-bin/get-pricing-info.rb?instance-type=#{instance_type}&start-time=#{timestamp}"
     cmd = "curl -s \"#{url}\""
