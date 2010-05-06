@@ -1365,15 +1365,32 @@ Project to bill this to:
 </select>
 </td>
 </tr>
+
 <tr>
+<td>Data Source</td>
 <td>
+
+<select id="data_source" name="data_source">
+  <option value="rdata">Preinitialized RData File</option>
+  <option value="ratios">Ratios text file</option>
+</select>
+
+</td>
+</tr>
+
+
+
+<tr class="if_ratios">
+<td>
+
+
 Number of clusters (k.clust): 
 </td>
 <td>
 <input name="k" value="200" id="k">
 </td>
 </tr>
-<tr>
+<tr class="if_ratios">
 <td>
 Number of iterations (n.iter):
 </td>
@@ -1381,7 +1398,7 @@ Number of iterations (n.iter):
 <input name="n_iter" value="2001" id="n_iter">
 </td>
 </tr>
-<tr>
+<tr class="if_ratios">
 <td>
 Ratios file:
 </td>
@@ -1389,13 +1406,9 @@ Ratios file:
 <%= file_field_tag 'uploaded_file' %>
 </td>
 </tr>
-<tr>
-<td colspan="2" align="center">
---or--
-</td>
-</tr>
 
-<tr>
+
+<tr class="if_rdata">
 <td>Preinitialized RData file (<a id="show_more_info">more info</a>):
 <span id="more_info">
 <br/>
@@ -1403,10 +1416,6 @@ You can supply <i>either</i> a ratios file <i>or</i> a preinitialized .RData fil
 cmonkey.init() and saved the resulting environment as "e" by using "save.image()". <br/>
 
 This allows you to do custom initialization or wrapping of functions.
-
-If you supply a preinitialized .RData file, the settings it contains will override settings in this form
-(organism, k.clust, n.iter). If your preinitialized file does not contain these settings, the ones in this form
-will be used.<br/>
 
 If your preinitialized file contains an e$cm.func.each.iter() function, that function will be overwritten by 
 CSpotRun.<br/>
@@ -1417,17 +1426,10 @@ For best results, use the most recent version of cMonkey to create your preiniti
 </td>
 <td>
 <%= file_field_tag 'preinitialized_rdata_file' %>
-
-<!--
-<tr>
-<td>
-Is this just a test run? 
-</td>
-<td>
-<input type="checkbox" name="just_for_fun" value="true"  id="just_for_fun"/> 
 </td>
 </tr>
--->
+
+
 </table>
 <br/>
 <input type="submit" id="submit_new_job_button"  value="Submit Job"/>

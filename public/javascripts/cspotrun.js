@@ -70,6 +70,17 @@ jQuery(document).ready(function() {
       jQuery("#price").val(jQuery(id).html());
    });
    
+   jQuery("#data_source").change(function(){
+      jQuery(".if_rdata").toggle();
+      jQuery(".if_ratios").toggle();
+      var val = jQuery("#data_source").val();
+      if (val == "rdata") {
+          jQuery("#uploaded_file").val("")
+      } else {
+          jQuery("#preinitialized_rdata_file").val("");
+      }
+   });
+   
    jQuery("#more_info").hide();
    
    jQuery("#show_more_info").click(function(){
@@ -82,25 +93,25 @@ jQuery(document).ready(function() {
    
    jQuery("#please_wait").hide();
    
+   jQuery(".if_ratios").hide();
+   
   jQuery("#submit_job").submit(function(){
       log("in submit function");
-      var usingRatios = false;
+      
+      
+      
+      var usingRatios = (jQuery("#data_source").val() == "ratios");
+      
       var valid = true;
       var msg = "Invalid form submission!\n";
       if (blank(f("uploaded_file")) && blank(f("preinitialized_rdata_file"))) {
           valid = false;
-          msg += "- You must upload either a ratios file or a preinitialized .RData file.\n";
+          msg += "- You must upload a data file.\n";
       }
       if (!blank(f("uploaded_file")) && !blank(f("preinitialized_rdata_file"))) {
           valid = false;
           msg += "- You cannot upload both a ratios file and a preinitialized RData file.\n";
           
-      }
-      
-      if (blank(f("uploaded_file"))) {
-          usingRatios = false;
-      } else {
-          usingRatios = true;
       }
       
       // fields that are always required: job_name, num_instances, price(numeric), 
@@ -110,7 +121,7 @@ jQuery(document).ready(function() {
       }
       
       
-      if (!usingRatios) {
+      if (usingRatios) {
           if(blank(f("k")) || blank(f("n_iter"))) {
               valid = false;
               msg += " - You must supply k and n.iter values!\n"

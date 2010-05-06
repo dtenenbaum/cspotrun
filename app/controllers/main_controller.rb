@@ -25,7 +25,6 @@ class MainController < ApplicationController
 #  end
 
   def authorize
-    @ec2 = ec2() if @ec2.nil?
     if (session[:user].nil? or session[:user].empty?)
       redirect_to :action => "login" and return false
     end
@@ -214,7 +213,7 @@ class MainController < ApplicationController
   end
   
   def kill
-    job = Job.find[:job_id]
+    job = Job.find(params[:job_id])
     type = ""
     if params[:id] =~ /^sir-/
       type = "request"
