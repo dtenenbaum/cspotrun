@@ -2,9 +2,6 @@
 
 
 
-<% job_id = (params[:job_id]) ? params[:job_id] : @job.id %>
-
-<% @job = Job.find(job_id) %>
 
 <h2>Events for Job  number <%=@job.id%> (<%=@job.name%>)</h2>
 Number of instances: <%=@job.num_instances%> <br/>
@@ -17,8 +14,65 @@ Started: <%= @job.created_at %><br/>
 Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "ratios file" %><br/>
 
 
+<% unless @status.nil? %>
+  <p>
+  <table border="1">
+    <tr>
+      <th>Request ID</th>
+      <th>Instance ID</th>
+      <th>Request State</th>
+      <th>Instance State</th>
+    </tr>
+    
+    <% for item in @status %>
+      <tr>
+        <td><%= item[:spot_instance_request_id] %></td>
+        <td><%= (item.has_key?(:instance_id) ? item[:instance_id] : "(none)") %></td>
+        <td><%= describe_state(item[:state], "request", item[:spot_instance_request_id], @job) %></td>
+        <td><%= (item.has_key?(:instance_info)) ? describe_state(item[:instance_info][:aws_state], "instance", item[:instance_id], @job) : "(none)" %></td>
+      </tr>
+    <% end %>
+  
+  </table>
+  <%#= link_to "Kill All Instance Requests For This Job" %> |
+  <%#= link_to "Kill All Instances For This Job" %> |
+  <%#= link_to "Kill Job -- All Instances and Requests" %> |
+  </p>
+  
+  
+  <div id="status"></div>
+  
+  
+  
+  
+<% end %>
+
+
+<p>
+
+<% if @is_job_complete %>
+  <b>Job is complete!</b><br/>
+  <% if @zip_file_size.nil? %>
+    <%= link_to "Email me The Link to the data files", :action => "email_link", :job_id => @job.id %><br/>
+  <% end %>
+<% else %>
+<%# check to see if job is stalled before displaying the following link%>
+<%#= link_to "Bump job to higher price" %>
+
+<% end %>
+
+<% unless @zip_file_size.nil? %>
+  <b><%= link_to "Download Data File", @zip_file_url %></b> (<%= @zip_file_size %>)<br/>
+  <%#= link_to "Delete Data File from CSpotRun" %><br/>
+  <%#= link_to "Delete Data Files from S3" %><br/>
+<% end %>
+
+</p>
+
+
+
 <br/>
-<%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => job_id)) %><br/>
+<%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => @job.id)) %><br/>
 
 Events:<br/>
 

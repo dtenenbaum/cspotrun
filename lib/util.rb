@@ -5,6 +5,7 @@ module Util
   require 'open3'
   require 'systemu'
   require 'yaml'
+  require 'pp'
   
   
   def logger
@@ -43,7 +44,6 @@ module Util
   
   
   def latest_price()
-    timestamp = aws_timestamp(Time.now)
     result = EC2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
     c1_xlarge = 0.0
     m1_large = 0.0
@@ -59,57 +59,11 @@ module Util
     return c1_xlarge, m1_large
   end
   
-  def latest_price_viejo(instance_type)
-    timestamp = aws_timestamp(Time.now)
-    url = "http://baliga.systemsbiology.net/cgi-bin/get-pricing-info.rb?instance-type=#{instance_type}&start-time=#{timestamp}"
-    cmd = "curl -s \"#{url}\""
-    stdout,stderr,error = run_cmd(cmd)
-    if error
-      lputs "oops, an error:"
-      lputs stderr
-    end
-    lputs "result:"
-    lputs stdout
-    lines = stdout.split("\n")
-    for line in lines
-      next if line.downcase =~ /windows/
-      segs = line.split(/\s/)
-      return segs[1].to_f
-    end
-  end
   
-  def latest_price_old(instance_type)
-    lputs "getting latest price for #{instance_type}"
-    timestamp = aws_timestamp(Time.now)
-    cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
-    #stdout = `#{cmd}`
-    #error = false
-    stdout,stderr,error = run_cmd(cmd)
-    if error
-      lputs "oops, an error:"
-      lputs stderr
-    else
-      lputs "result:"
-      lputs stdout
-      lines = stdout.split("\n")
-      for line in lines
-        next if line.downcase =~ /windows/
-        segs = line.split(/\s/)
-        return segs[1].to_f
-      end
-      
-    end
-  end
   
   def recommended_price(current_price)
     current_price + 0.01
   end
-  
-  def aws_timestamp(timevar)
-    utc = timevar.utc
-     "#{utc.year}-#{"%02d" % utc.mon}-#{"%02d" % utc.mday}T#{"%02d" % utc.hour}:#{"%02d" % utc.min}:#{"%02d" % utc.sec}.000Z"
-  end
-  
   
   def lputs(message)
     puts message
@@ -212,6 +166,15 @@ module Util
     ##end
     
   end
+  
+  def zip_file_size_and_url(job)
+    if (size = Kernel.test(?s, "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"))
+      if size > 4096
+        return "#{(size/1_000_000).to_i} MB", "#{STATIC_FILES_URL}/job_#{job.id}.zip"
+      end
+    end
+    return nil,nil
+  end
 
   def fire_event(text, job, instance_name=nil, public_ip=nil)
     id  = (job.is_a?(Fixnum)) ? job : job.id
@@ -268,6 +231,49 @@ module Util
     get_s3.bucket(name, true)
   end
   
+  
+  def get_job_status(job)
+    instances = job.instances
+    return nil if instances.nil? or instances.empty?
+    unfiltered_instance_request_results = EC2.describe_spot_instance_requests
+    #lputs "raw sir results:"
+    #pp unfiltered_instance_request_results
+    instance_request_results = []
+    list_of_instances = []
+    for item in unfiltered_instance_request_results
+      #lputs "sir id  = #{item[:spot_instance_request_id]}"
+      if instances.detect{|i|i.sir_id == item[:spot_instance_request_id]}
+        instance_request_results.push item
+        if item.has_key?(:instance_id)
+          list_of_instances.push item[:instance_id]
+        end
+      end
+    end
+    
+    
+    instance_results = EC2.describe_instances(list_of_instances)
+    
+    #lputs "sir results:"
+    #pp instance_request_results
+    #lputs "instance results:"
+    #pp instance_results
+    #lputs "list of instances:"
+    #pp list_of_instances
+    new_list = []
+
+    for item in instance_request_results
+      if (item.has_key?(:instance_id) and (f = instance_results.detect{|i|i[:aws_instance_id] == item[:instance_id]}))
+        #lputs "we are here!"
+        item[:instance_info] = f
+      end
+      new_list << item
+    end
+    
+#    lputs "sir results:"
+#    pp new_list
+    return (new_list.empty?) ? nil : new_list
+  end
+  
   def put_file(bucket, file, remotename=nil)
     rname = (remotename.nil?) ? file.split("/").last : remotename
     cmd = "#{S3CMD_LOC}s3cmd put #{file} s3://#{bucket}/#{rname}"
@@ -277,66 +283,29 @@ module Util
     lputs "status: #{status}"
   end
   
-  def create_bucket_old(name)
-    lputs "Creating bucket #{name}"
-    cmd = "#{S3CMD_LOC}s3cmd.rb createbucket #{name}"
-    stdout, stderr, error = run_cmd(cmd)
-    if (error)
-      lputs.info "stderr output creating bucket:\n#{stderr}"
-    end
-  end
-  
   def move_data_to_job_bucket(job, job_bucket)
     put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
   end
   
   def request_instances(job)
-    if RAILS_ENV == 'production'
-      request_instances_remote(job)
-    else
-      request_instances_local(job)
-    end
-  end
-  
-  
-  def request_instances_local(job)
-    cmd = job.command
-    stdout, stderr, error = run_cmd(cmd)
-    if (error)
-      lputs "stderr output requesting instances:\n#{stderr}"
-    end
-    lines = stdout.split("\n")
-    for line in lines
-      #SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
-      segs = line.split(/\s/)
-      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
-      i.save
-      fire_event("creating instance #{i.sir_id}", job)
-    end
-  end
-  
-  def request_instances_remote(job)
-    cmd = job.command
-    querystring = '"'
-    querystring += "pass=#{CSPOTRUN_PASS}&cmd=#{cmd.gsub(" ","+")}"
-    querystring += '"'
-    fullcmd = "curl -d  #{querystring} https://baliga.systemsbiology.net/cgi-bin/make-instance-request.rb"
-    stdout, stderr, error = run_cmd(fullcmd)
-    if (error)
-      lputs "stderr output requesting instances:\n#{stderr}"
-    end
-    lputs "length of stdout: #{stdout.length}"
-    lputs "result = \n#{stdout}"
-    lines = stdout.split("\n")
-    for line in lines
-      ##SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
-      segs = line.split(/\s/)
-      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
-      i.save
-      fire_event("creating instance #{i.sir_id}", job)
-    end
+    user_data_yaml = YAML.load_file job.user_data_file
+    user_data = YAML::dump(user_data_yaml)
     
+    lputs "user data = "
+    pp user_data
+    args = {:image_id => AMI_ID, :spot_price => job.price, :instance_type => job.instance_type, :instance_count => job.num_instances,
+      :key_name => AWS_KEY, :type => "persistent", :user_data => user_data}
+    lputs "args = "
+    pp args
+    results = EC2.request_spot_instances args
+    pp results
+    for result in results
+      i = Instance.new(:job_id => job.id, :sir_id => result[:spot_instance_request_id])
+      i.save
+      fire_event("creating instance #{i.sir_id}", job)
+    end
   end
+  
   
   def create_instance_buckets(job)
     for instance in job.instances
@@ -348,6 +317,13 @@ module Util
   
   def safe_bucket_name(name)
     name.downcase.gsub("_","-")
+  end
+
+  def is_job_complete?(job)
+    instances = job.instances
+    
+    success_stories = instances.select{|i|i.status == "success"}
+    return (success_stories.length == instances.length)
   end
   
   def handle_job_completion(job, instance_id) #test with 70
@@ -391,7 +367,7 @@ module Util
       Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
       
     end
-    
+    lputs "nothing to do"
     
     
   end
@@ -424,6 +400,7 @@ module Util
   end
   
   
+  
   def get_file_from_s3(bucketname, remotefile, localfile)
     cmd = "#{S3CMD_LOC}s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
@@ -433,13 +410,12 @@ module Util
     lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
   end
   
-  def get_file_from_s3_old(bucketname, remotefile, localfile)
-    cmd = "#{S3CMD_LOC}s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
-    stdout,stderr,error = run_cmd(cmd)
-    if (error)
-      lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
-    end
-    lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+  def kill_requests(*ids)
+    EC2.cancel_spot_instance_requests(ids)
+  end
+  
+  def kill_instances(*ids)
+    EC2.terminate_instances(ids)
   end
   
   

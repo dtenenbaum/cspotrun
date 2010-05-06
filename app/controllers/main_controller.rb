@@ -75,7 +75,7 @@ class MainController < ApplicationController
     @large_recommended = recommended_price(@large_price)
   end
   
-  def test
+  def test_method # do not call a method "test", it conflicts with Kernel.test
     render :text => "ok"
   end
   
@@ -100,7 +100,12 @@ class MainController < ApplicationController
   
   def events
     #puts "timezone = #{Time.zone}"
+    @job = Job.find params['job_id']
+    @status = get_job_status(@job)
+    pp @status
     @events = Event.paginate_by_job_id params['job_id'], :include => :instance, :page => params[:page], :order => 'created_at DESC'
+    @zip_file_size, @zip_file_url = zip_file_size_and_url(@job)
+    @is_job_complete = is_job_complete?(@job)
   end
   
   def submit_job
@@ -204,18 +209,33 @@ class MainController < ApplicationController
     render(:action => "events", :job_id => @job.id) and return false
   end
   
+  def kill
+    job = Job.find[:job_id]
+    type = ""
+    if params[:id] =~ /^sir-/
+      type = "request"
+      kill_requests(params[:id])
+      fire_event("instance request #{params[:id]}  killed by user", job)
+    elsif params[:id] =~ /^i-/
+      type = "instance"
+      kill_instances(params[:id])
+      fire_event("instance #{params[:id]} killed by user", job, params[:id])
+    end
+    flash[:notice] = "#{type} #{params[:id]} killed."
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
   
+  def email_link
+    job = Job.find params[:job_id]
+    handle_job_completion(job, job.instances.first.id)
+    flash[:notice] = "We are downloading the data and will send you an email when we're done."
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
   
 
   def hose
-    #cmd = "EC2_HOME=/local/ec2-api-tools-1.3-46266 /local/ec2-api-tools-1.3-46266/bin/ec2-request-spot-instances --price 0.245 --instance-count 1 --instance-type c1.xlarge --key gsg-keypair --type persistent --user-data-file /tmp/user_data_7.txt ami-35c02e5c"
-#    cmd = "ec2-describe-spot-price-history --instance-type m1.large --start-time 2010-04-30T15:51:10.000Z"
-#    cmd = "ls"
-    env = {}
-#    #stdout, stderr, error, status = run_cmd(cmd)
-    cmd = "ec2-describe-instances"
-    status, stdout, stderr = systemu(cmd)#, 'env' => env)
-    render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
+    bortz()
+    render :text => "ok"
   end
   
 end
