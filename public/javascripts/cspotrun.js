@@ -58,17 +58,26 @@ var f = function(str) {
 }
 
 
+var priceHistoryUrl = "http://cloudexchange.org/charts/us-east-1.linux.INSTANCE_TYPE.html";
+
 jQuery(document).ready(function() {
     
    jQuery("#email_input").focus();
    jQuery(".hide_me").hide();
    
+   
+   
    jQuery("#price").val(jQuery("#large_recommended_price").html());
+
+   jQuery("#pricing_history").attr("href", priceHistoryUrl.replace("INSTANCE_TYPE", jQuery("#processor_type").val()));
    
    jQuery("#processor_type").change(function(){
       var id = (jQuery("#processor_type").val() == "m1.large") ? "#small_recommended_price" : "#large_recommended_price";
       jQuery("#price").val(jQuery(id).html());
+      jQuery("#pricing_history").attr("href", priceHistoryUrl.replace("INSTANCE_TYPE", jQuery("#processor_type").val()));
    });
+   
+   
    
    jQuery("#data_source").change(function(){
       jQuery(".if_rdata").toggle();
