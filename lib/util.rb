@@ -185,8 +185,8 @@ module Util
       instance = Instance.find_by_sir_id(instance_name)
       unless instance.nil?
         instance_id = instance.id
-        unless (event.public_ip.nil?)
-          instance.public_ip = event.public_ip
+        unless (public_ip.nil?)
+          instance.public_ip = public_ip
           instance.save
         end
       end
