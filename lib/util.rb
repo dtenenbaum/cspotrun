@@ -270,7 +270,8 @@ module Util
     for item in instance_request_results
       if (item.has_key?(:instance_id) and (f = instance_results.detect{|i|i[:aws_instance_id] == item[:instance_id]}))
         #lputs "we are here!"
-        item[:cspotrun_instance_id] = instances.detect{|i|i.sir_id == item[:instance_id]}.id
+        cspotrun_instance = instances.detect{|i|i.sir_id == item[:instance_id]}
+        item[:cspotrun_instance_id] = cspotrun_instance.id unless cspotrun_instance.nil?
         item[:instance_info] = f
       end
       new_list << item
