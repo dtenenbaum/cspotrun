@@ -106,6 +106,10 @@ class MainController < ApplicationController
     @job = Job.find params['job_id']
     @status = get_job_status(@job)
     pp @status
+    @public_ip = nil
+    if (@status.has_key?(:cspotrun_instance_id))
+      @public_ip = Instance.find(@status[:cspotrun_instance_id]).public_ip
+    end
     @events = Event.paginate_by_job_id params['job_id'], :include => :instance, :page => params[:page], :order => 'created_at DESC'
     @zip_file_size, @zip_file_url = zip_file_size_and_url(@job)
     @is_job_complete = is_job_complete?(@job)
