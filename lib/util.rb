@@ -263,7 +263,7 @@ module Util
     #pp instance_results
     #lputs "list of instances:"
     #pp list_of_instances
-    #new_list = []
+    new_list = []
 
     for item in instance_request_results
       if (item.has_key?(:instance_id) and (f = instance_results.detect{|i|i[:aws_instance_id] == item[:instance_id]}))
