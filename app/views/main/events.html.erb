@@ -31,7 +31,7 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
         <td><%= (item.has_key?(:instance_id) ? item[:instance_id] : "(none)") %></td>
         <td><%= describe_state(item[:state], "request", item[:spot_instance_request_id], @job) %></td>
         <td><%= (item.has_key?(:instance_info)) ? describe_state(item[:instance_info][:aws_state], "instance", item[:instance_id], @job) : "(none)" %></td>
-        <td><%= (item.has_key?(:cspotrun_instance_id) ? item[:cspotrun_instance_id] : "(unknown)"  %></td>
+        <td><%= (item.has_key?(:cspotrun_instance_id)) ? item[:cspotrun_instance_id] : "(unknown)"  %></td>
       </tr>
     <% end %>
   
