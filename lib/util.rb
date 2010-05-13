@@ -183,7 +183,13 @@ module Util
 
     unless (instance_name.nil?)
       instance = Instance.find_by_sir_id(instance_name)
-      instance_id = instance.id unless instance.nil?
+      unless instance.nil?
+        instance_id = instance.id
+        unless (event.public_ip.nil?)
+          instance.public_ip = event.public_ip
+          instance.save
+        end
+      end
     end
 
     lputs "firing event: #{text} on job #{id}, instance_id = #{instance_id}, public_ip = #{public_ip}"
@@ -264,6 +270,7 @@ module Util
     for item in instance_request_results
       if (item.has_key?(:instance_id) and (f = instance_results.detect{|i|i[:aws_instance_id] == item[:instance_id]}))
         #lputs "we are here!"
+        item[:cspotrun_instance_id] = instances.detect{|i|i.sir_id == item[:instance_id]}.id
         item[:instance_info] = f
       end
       new_list << item
