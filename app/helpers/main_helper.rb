@@ -33,7 +33,7 @@ module MainHelper
   def instance_id(item)
     instance = instance(item)
     return instance.id unless instance.nil?
-    nil
+    ""
   end
     
   
