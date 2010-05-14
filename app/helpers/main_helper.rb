@@ -39,6 +39,7 @@ module MainHelper
   
   def log_info(item)
     instance = instance(item)
+    return false if instance.nil?
     for item in @log_info
       return item.last if item.first == instance.id
     end
