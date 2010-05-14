@@ -24,6 +24,7 @@ module MainHelper
   
   
   def instance(item)
+    puts "hohum"
     if item.has_key?(:cspotrun_instance_id)
        return Instance.find(item[:cspotrun_instance_id])
     end
@@ -31,17 +32,17 @@ module MainHelper
   end
   
   def instance_id(item)
-    instance = instance(item)
-    return instance.id unless instance.nil?
+    i = instance(item)
+    return i.id unless i.nil?
     ""
   end
     
   
   def log_info(item)
-    instance = instance(item)
-    return false if instance.nil?
+    i = instance(item)
+    return false if i.nil?
     for item in @log_info
-      return item.last if item.first == instance.id
+      return item.last if item.first == i.id
     end
     false
   end
