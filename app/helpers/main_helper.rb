@@ -30,6 +30,13 @@ module MainHelper
     nil
   end
   
+  def instance_id(item)
+    instance = instance(item)
+    return instance.id unless instance.nil?
+    nil
+  end
+    
+  
   def log_info(item)
     instance = instance(item)
     for item in @log_info

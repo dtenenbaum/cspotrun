@@ -33,7 +33,7 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
         <td><%= describe_state(item[:state], "request", item[:spot_instance_request_id], @job) %></td>
         <td><%= (item.has_key?(:instance_info)) ? describe_state(item[:instance_info][:aws_state], "instance", item[:instance_id], @job) : "(none)" %></td>
         <td><%= (item.has_key?(:cspotrun_instance_id)) ? Instance.find(item[:cspotrun_instance_id]).public_ip  : "(unknown)"  %></td>
-        <td><%= (log_info(item)) ? link_to("Log", {:action => "show_log_file", :id => instance(item).id}, :target => "cspotrun_log") : "none" %></td>
+        <td><%= (log_info(item)) ? link_to("Log", {:action => "show_log_file", :id => instance_id(item)}, :target => "cspotrun_log") : "none" %></td>
       </tr>
     <% end %>
   
