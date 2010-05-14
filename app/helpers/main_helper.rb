@@ -23,4 +23,29 @@ module MainHelper
   end
   
   
+  def instance(item)
+    if item.has_key?(:cspotrun_instance_id)
+       return Instance.find(item[:cspotrun_instance_id])
+    end
+    nil
+  end
+  
+  def log_info(item)
+    instance = instance(item)
+    for item in @log_info
+      return item.last if item.first == instance.id
+    end
+    false
+  end
+  
+  def instance_ids
+    res = []
+    for item in @status
+      res.push item[:instance_id] if item.has_key?(:instance_id)
+    end
+#    return nil if res.empty?
+    return res.join(",")
+  end
+  
+  
 end

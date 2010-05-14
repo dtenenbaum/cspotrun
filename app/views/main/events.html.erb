@@ -22,7 +22,8 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
       <th>Instance ID</th>
       <th>Request State</th>
       <th>Instance State</th>
-      <th>Public IP</th>
+      <th>Hostname</th>
+      <th>Log File</th>
     </tr>
     
     <% for item in @status %>
@@ -32,13 +33,15 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
         <td><%= describe_state(item[:state], "request", item[:spot_instance_request_id], @job) %></td>
         <td><%= (item.has_key?(:instance_info)) ? describe_state(item[:instance_info][:aws_state], "instance", item[:instance_id], @job) : "(none)" %></td>
         <td><%= (item.has_key?(:cspotrun_instance_id)) ? Instance.find(item[:cspotrun_instance_id]).public_ip  : "(unknown)"  %></td>
+        <td><%= (log_info(item)) ? link_to("Log", {:action => "show_log_file", :id => instance(item).id}, :target => "cspotrun_log") : "none" %></td>
       </tr>
     <% end %>
   
   </table>
-  <%#= link_to "Kill All Instance Requests For This Job" %> 
-  <%#= link_to "Kill All Instances For This Job" %> 
-  <%#= link_to "Kill Job -- All Instances and Requests" %> 
+  <%= link_to "Kill All Requests", :action => "kill_all_requests", :job_id => @job.id %> |
+  <%= link_to "Kill All Instances", :action => "kill_all_instances", :instance_ids => instance_ids() %> |
+  <%= link_to "Kill All Instances and Requests", :action => "kill_all", :job_id => @job.id, :instance_ids => instance_ids() %> |
+  Bump Job To Higher Price
   </p>
   
   
@@ -74,7 +77,7 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
 
 
 <br/>
-<%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => @job.id)) %><br/>
+<b><%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => @job.id)) %></b><br/>
 
 Events:<br/>
 

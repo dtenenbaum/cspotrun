@@ -323,6 +323,32 @@ module Util
     end
   end
   
+  
+  def get_instance_bucket(instance)
+    s3 =  RightAws::S3.new(AWS_ACCOUNT_KEY, AWS_SECRET_KEY)
+    b = s3.bucket("isb-cspotrun-instance-bucket-#{instance.sir_id}")
+    #return !b.nil?
+    b
+  end
+  
+  def has_log_file?(instance)
+    b = get_instance_bucket(instance)
+    return nil if b.nil?
+    keys = b.keys
+    match = keys.detect{|i|i.full_name == "#{b.name}/cmonkey.log.txt.gz"}
+    return match
+  end
+    
+  
+  def get_log_file(instance)
+    return nil unless has_log_file?(instance)
+    name = "/tmp/instance_log_#{instance.id}.gz"
+    get_file_from_s3(get_instance_bucket(instance).name, "cmonkey.log.txt.gz", name)
+    stdout,stderr,error,status = run_cmd("gunzip #{name}")
+    return name.gsub(".gz","")
+  end
+  
+  
   def safe_bucket_name(name)
     name.downcase.gsub("_","-")
   end

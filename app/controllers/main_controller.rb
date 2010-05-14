@@ -100,11 +100,24 @@ class MainController < ApplicationController
     render :action => "jobs"
   end
   
+  def show_log_file
+    headers['Content-type'] = 'text/plain'
+    instance = Instance.find params[:id]
+    file = get_log_file(instance)
+    #send_file file, :disposition => :inline
+    render :file => file
+  end
+  
   
   def events
     #puts "timezone = #{Time.zone}"
     @job = Job.find params['job_id']
     @status = get_job_status(@job)
+    @log_info = []
+    for instance in @job.instances
+      @log_info << [instance.id, has_log_file?(instance)]
+    end
+    
     pp @status
     @public_ip = nil
 #    if (@status.has_key?(:cspotrun_instance_id))
@@ -229,6 +242,30 @@ class MainController < ApplicationController
       fire_event("instance #{params[:id]} killed by user", job, params[:id])
     end
     flash[:notice] = "#{type} #{params[:id]} killed."
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def kill_all_requests
+    flash[:notice] = "Requests killed."
+    job = Job.find params[:job_id]
+    
+    kill_requests(*job.instances.map{|i|i.sir_id})
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def kill_all_instances
+    flash[:notice] = "Instances killed. They will be restarted if there are still active requests."
+    instances = params[:instance_ids].split(",")
+    kill_instances(instances)
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def kill_all
+    flash[:notice] = "All requests and instances killed."
+    job = Job.find params[:job_id]
+    instances = params[:instance_ids].split(",")
+    kill_requests(*job.instances.map{|i|i.sir_id})
+    kill_instances(*instances)
     redirect_to :action => "events", :job_id => params[:job_id]
   end
   
