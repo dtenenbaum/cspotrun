@@ -445,11 +445,25 @@ module Util
   end
   
   def kill_requests(*ids)
-    ec2.cancel_spot_instance_requests(ids)
+    begin
+      ec2.cancel_spot_instance_requests(ids)
+    rescue Exception => ex
+      lputs ex.message
+      lputs ex.backtrace
+      return ex.message
+    end
+    nil
   end
   
   def kill_instances(*ids)
-    ec2.terminate_instances(ids)
+    begin
+      ec2.terminate_instances(ids)
+    rescue Exception => ex
+      lputs ex.message
+      lputs ex.backtrace
+      return ex.message
+    end
+    nil
   end
   
   def ec2()

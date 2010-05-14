@@ -39,7 +39,7 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
   
   </table>
   <%= link_to "Kill All Requests", :action => "kill_all_requests", :job_id => @job.id %> |
-  <%= link_to "Kill All Instances", :action => "kill_all_instances", :instance_ids => instance_ids() %> |
+  <%= link_to "Kill All Instances", :action => "kill_all_instances", :job_id => @job.id, :instance_ids => instance_ids() %> |
   <%= link_to "Kill All Instances and Requests", :action => "kill_all", :job_id => @job.id, :instance_ids => instance_ids() %> |
   Bump Job To Higher Price
   </p>

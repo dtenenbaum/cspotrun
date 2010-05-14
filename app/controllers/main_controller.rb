@@ -234,7 +234,7 @@ class MainController < ApplicationController
     type = ""
     if params[:id] =~ /^sir-/
       type = "request"
-      kill_requests(params[:id])
+      result = kill_requests(params[:id])
       fire_event("instance request #{params[:id]}  killed by user", job)
     elsif params[:id] =~ /^i-/
       type = "instance"
@@ -242,6 +242,7 @@ class MainController < ApplicationController
       fire_event("instance #{params[:id]} killed by user", job, params[:id])
     end
     flash[:notice] = "#{type} #{params[:id]} killed."
+    flash[:notice] = "Error: #{result}" unless result.nil?
     redirect_to :action => "events", :job_id => params[:job_id]
   end
   
@@ -249,14 +250,16 @@ class MainController < ApplicationController
     flash[:notice] = "Requests killed."
     job = Job.find params[:job_id]
     
-    kill_requests(*job.instances.map{|i|i.sir_id})
+    result = kill_requests(*job.instances.map{|i|i.sir_id})
+    flash[:notice] = "Error: #{result}" unless result.nil?
     redirect_to :action => "events", :job_id => params[:job_id]
   end
   
   def kill_all_instances
     flash[:notice] = "Instances killed. They will be restarted if there are still active requests."
     instances = params[:instance_ids].split(",")
-    kill_instances(instances)
+    result = kill_instances(instances)
+    flash[:notice] = "Error: #{result}" unless result.nil?
     redirect_to :action => "events", :job_id => params[:job_id]
   end
   
@@ -264,8 +267,11 @@ class MainController < ApplicationController
     flash[:notice] = "All requests and instances killed."
     job = Job.find params[:job_id]
     instances = params[:instance_ids].split(",")
-    kill_requests(*job.instances.map{|i|i.sir_id})
-    kill_instances(*instances)
+    res1 = kill_requests(*job.instances.map{|i|i.sir_id})
+    res2 = kill_instances(*instances)
+    if (!res1.nil? or !res2.nil?)
+      flash[:notice] = "Error: #{(res1.nil?) ? '' : res1} #{(res2.nil?)  ? '' : res2}"
+    end
     redirect_to :action => "events", :job_id => params[:job_id]
   end
   
