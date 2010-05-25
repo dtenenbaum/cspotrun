@@ -18,10 +18,24 @@ module MainHelper
     elsif state == "terminated" or state == "cancelled"
       img = image_tag("instance-terminated.gif")
     end
-    
     "#{img} #{state} #{link}"
   end
-  
+
+
+  def job_status(job)
+    img = ""
+    if job.status == "running" 
+      img = image_tag("instance-running.gif", :alt => "job is running")
+    elsif job.status == "success"
+      img = image_tag("checkmark.png", :alt => "job has completed successfully")
+    elsif job.status = "starting"
+      img = image_tag("instance-starting.gif", :alt => "starting")
+    elsif job.status == "failure"
+      img = image_tag("error.png", :alt => "one or more instances of this job has failed")
+    end
+    img
+#    "#{img} #{job.status}"
+  end
   
   def instance(item)
     puts "hohum"
@@ -55,6 +69,7 @@ module MainHelper
 #    return nil if res.empty?
     return res.join(",")
   end
+
   
   
 end

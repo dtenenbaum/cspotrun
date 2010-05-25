@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100513222538) do
+ActiveRecord::Schema.define(:version => 20100524230802) do
 
   create_table "events", :force => true do |t|
     t.integer  "job_id",      :limit => 11
@@ -47,6 +47,8 @@ ActiveRecord::Schema.define(:version => 20100513222538) do
     t.datetime "updated_at"
     t.integer  "n_iter",              :limit => 11
     t.boolean  "user_supplied_rdata"
+    t.boolean  "has_preinit_script"
+    t.string   "script_filename"
   end
 
   create_table "users", :force => true do |t|

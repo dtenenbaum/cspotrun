@@ -1404,14 +1404,14 @@ Number of iterations (n.iter):
 Ratios file:
 </td>
 <td>
-<%= file_field_tag 'uploaded_file' %>
+<%= file_field_tag 'uploaded_file', :class => "formField"  %>
 </td>
 </tr>
 
 
 <tr class="if_rdata">
-<td>Preinitialized RData file (<a id="show_more_info">more info</a>):
-<span id="more_info">
+<td id>Preinitialized RData file (<a id="show_more_info">more info</a>):
+<span id="more_info" class="hide_me">
 <br/>
 You can supply <i>either</i> a ratios file <i>or</i> a preinitialized .RData file in which you have run
 cmonkey.init() and saved the resulting environment as "e" by using "save.image()". <br/>
@@ -1425,10 +1425,30 @@ For best results, use the most recent version of cMonkey to create your preiniti
 <br/><a id="hide_more_info">Hide</a><br/>
 </span>
 </td>
-<td>
-<%= file_field_tag 'preinitialized_rdata_file' %>
+<td id="u1">
+<%= file_field_tag 'preinitialized_rdata_file', :class => "formField2" %>
 </td>
 </tr>
+
+<tr class="if_rdata">
+<td>Custom pre-run script (<a id="show_pre_run_script_info">more info</a>):
+<span id="pre_run_script_info" class="hide_me">
+<br/>
+You can optionally provide a pre-run script. This should be a valid R script.
+It should assume that a cMonkey environment called "e" is already loaded. If your pre-run script fails,
+your job will be terminated. 
+<br/><a id="hide_pre_run_script_info">Hide</a><br/>
+
+</span>
+</td>
+<td id="u2">
+
+<%= file_field_tag 'pre_run_script', :class => "formField"  %>
+
+
+</td>
+</tr>
+
 
 
 </table>
@@ -1438,6 +1458,6 @@ For best results, use the most recent version of cMonkey to create your preiniti
 </form>
 
 <br/>
-<span id="please_wait">
+<span id="please_wait" class="hide_me">
 <b>Please wait, your file is uploading. This will take a moment. </b><br/>
 </span>

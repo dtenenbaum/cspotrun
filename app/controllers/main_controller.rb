@@ -90,7 +90,7 @@ class MainController < ApplicationController
   def my_jobs
     lputs("current user is: #{session[:user]}")
     @all = false
-    @jobs = Job.paginate_by_email session[:user], :page => params[:page], :order => 'created_at DESC'
+    @jobs = Job.paginate_by_email session[:user], :include => :instances, :page => params[:page], :order => 'jobs.created_at DESC'
     render :action => "jobs"
   end
   
@@ -128,20 +128,38 @@ class MainController < ApplicationController
     @is_job_complete = is_job_complete?(@job)
   end
   
+  
+  def get_file_path_of(thing)
+    
+    if (thing.kind_of?(String) and thing == "")
+      return nil
+    end
+    
+    if thing.kind_of?(StringIO)
+      fname = "/tmp/#{Time.now.to_i}"
+      File.open(fname, "wb") { |f| f.write(thing.read) }
+      return fname
+    else
+      return thing.path
+    end
+  end
+  
   def submit_job
-    #@blanks = []
-    #for item in params.values
-    #  @blanks << item if (item.respond_to?(:empty?) and item.empty?)
-    #end
     
-    #render :action => "fillinfields" and return false unless @blanks.empty?
     
+
     @job = Job.new()
     
-    @job.user_supplied_rdata = (params[:preinitialized_rdata_file].respond_to?(:path)) ? true : false
     
-    #render :text => params[:preinitialized_rdata_file].path and return false if true
-    #render :text => @job.user_supplied_rdata and return false if true
+    
+    rdata_file = get_file_path_of params[:preinitialized_rdata_file]
+    
+    @job.user_supplied_rdata = (!rdata_file.nil?)
+
+
+    preinit = get_file_path_of params[:pre_run_script]
+
+    
     
     @job.name = params['job_name']
     @job.price = params['price']
@@ -159,6 +177,14 @@ class MainController < ApplicationController
     #  Job.transaction do
 
         @job.save
+
+
+        @job.has_preinit_script = (!preinit.nil?)
+        if (@job.has_preinit_script)
+          FileUtils.rm_f "/tmp/preinit_#{@job.id}.R"
+          FileUtils.mv preinit, "/tmp/preinit_#{@job.id}.R"
+        end
+
         
         fire_event("starting job #{@job.name} (id #{@job.id})", @job)
         @job.user_data_file = "/tmp/user_data_#{@job.id}.txt"
@@ -169,8 +195,8 @@ class MainController < ApplicationController
           
 
        if (@job.user_supplied_rdata)
-         fileobj = params[:preinitialized_rdata_file]
-         FileUtils.mv fileobj.path, "/tmp/initedEnv_#{@job.id}.RData"
+         FileUtils.rm_f "/tmp/initedEnv_#{@job.id}.RData"
+         FileUtils.mv rdata_file, "/tmp/initedEnv_#{@job.id}.RData"
          
          
          #File.open("/tmp/initedEnv_#{@job.id}.RData", "wb") { |f| f.write(fileobj.read) }
@@ -179,11 +205,11 @@ class MainController < ApplicationController
        else
          @job.ratios_file = "/tmp/ratios_#{@job.id}.txt" 
 
-         fileobj = params[:uploaded_file]
+         fileobj = get_file_path_of params[:uploaded_file]
 
          lputs "writing to #{@job.ratios_file}..."
 
-         FileUtils.mv fileobj.path, @job.ratios_file
+         FileUtils.mv fileobj, @job.ratios_file
 
          #File.open(@job.ratios_file, "wb") { |f| f.write(fileobj.read) }
 
@@ -197,6 +223,9 @@ class MainController < ApplicationController
          
        end
 
+        
+        
+        
         
 
         @job.save

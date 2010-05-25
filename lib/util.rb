@@ -140,20 +140,21 @@ module Util
       
       begin
         #include Util #if RAILS_ENV == 'development'
-        fire_event("creating job bucket", job)
-        job_bucket = create_job_bucket(job)
 
+        if (job.has_preinit_script)
+          fire_event("moving preinitialization script to job bucket", job)
+          move_preinit_script(job)
+        end
 
         fire_event("moving initial data to job bucket",job)
-
-        move_data_to_job_bucket(job, job_bucket)
+        
+        
+        
+        move_data_to_job_bucket(job)
 
         fire_event("requesting instances",job)
         request_instances(job)
 
-        fire_event("creating instance buckets",job)
-
-        create_instance_buckets(job)
         lputs "done with spawning job #{job.id}"
 
       rescue Exception => ex
@@ -201,14 +202,13 @@ module Util
     lputs "in test"
   end
   
-  def get_job_bucket_name(job)
-    hostname = safe_bucket_name(`hostname`.chomp())
-    "isb-cspotrun-job-bucket-#{hostname}-#{job.id}"
+  
+  def get_short_hostname
+    hostname = safe_bucket_name `hostname`
+    hostname.split(".").first
   end
+  
 
-  def create_job_bucket(job)
-    create_bucket(get_job_bucket_name(job))
-  end
   
   def s3login
     yaml = YAML::load_file("#{ENV['HOME']}/.s3conf/s3config.yml")
@@ -222,18 +222,6 @@ module Util
     s3 = RightAws::S3.new(key,pass)
   end
   
-  
-  def create_bucket(name)
-    cmd = "#{S3CMD_LOC}s3cmd mb s3://#{name}"
-    stdout, stderr, error, status = run_cmd(cmd)
-    lputs "stdout:\n#{stdout}"
-    lputs "stderr:\n#{stderr}"
-    lputs "status: #{status}"
-  end
-  
-  def create_bucket_medium_old(name)
-    get_s3.bucket(name, true)
-  end
   
   
   def get_job_status(job)
@@ -291,8 +279,13 @@ module Util
     lputs "status: #{status}"
   end
   
-  def move_data_to_job_bucket(job, job_bucket)
-    put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
+  def move_data_to_job_bucket(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/initedEnv_#{job.id}.RData", "#{get_short_hostname}/job-#{job.id}/initedEnv.RData" )
+  end
+  
+  
+  def move_preinit_script(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/preinit_#{job.id}.R", "#{get_short_hostname}/job-#{job.id}/preinit.R" )
   end
   
   def request_instances(job)
@@ -315,18 +308,11 @@ module Util
   end
   
   
-  def create_instance_buckets(job)
-    for instance in job.instances
-      name = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
-      create_bucket(name)
-      fire_event("creating instance bucket #{name}", job)
-    end
-  end
   
   
   def get_instance_bucket(instance)
     s3 =  RightAws::S3.new(AWS_ACCOUNT_KEY, AWS_SECRET_KEY)
-    b = s3.bucket("isb-cspotrun-instance-bucket-#{instance.sir_id}")
+    b = s3.bucket(INSTANCE_BUCKET_NAME)
     #return !b.nil?
     b
   end
@@ -335,16 +321,16 @@ module Util
     b = get_instance_bucket(instance)
     return nil if b.nil?
     keys = b.keys
-    match = keys.detect{|i|i.full_name == "#{b.name}/cmonkey.log.txt.gz"}
+    match = keys.detect{|i|i.full_name == "#{b.name}/#{instance.sir_id}/cmonkey.log.txt.gz"}
     lputs "has log file? #{!match.nil?}"
     return match
   end
     
   
-  def get_log_file(instance)
+  def get_log_file(instance) 
     return nil unless has_log_file?(instance)
     name = "/tmp/instance_log_#{instance.id}.gz"
-    get_file_from_s3(get_instance_bucket(instance).name, "cmonkey.log.txt.gz", name)
+    get_file_from_s3(get_instance_bucket(instance).name, "/#{instance.sir_id}/cmonkey.log.txt.gz", name)
     stdout,stderr,error,status = run_cmd("gunzip #{name}")
     return name.gsub(".gz","")
   end
@@ -358,7 +344,12 @@ module Util
     instances = job.instances
     return false if instances.empty?
     success_stories = instances.select{|i|i.status == "success"}
-    return (success_stories.length == instances.length)
+    good = (success_stories.length == instances.length)
+    if (good)
+      job.status = 'complete'
+      job.save
+    end
+    return good
   end
   
   def handle_job_completion(job, instance_id) #test with 70
@@ -382,9 +373,8 @@ module Util
       instances.each_with_index do |instance, i|
         instance_dir = "#{jobdir}/instance_#{i+1}"
         Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-        bucketname = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
-        get_file_from_s3(bucketname, "complete.image.RData", "#{instance_dir}/complete.image.RData")
-        get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{instance.sir_id}/complete.image.RData", "#{instance_dir}/complete.image.RData")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       end
       cmd = "cd #{STATIC_FILES_FOLDER};zip -r job_#{job.id}.zip job_#{job.id}/"
       zipfile = "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"
@@ -399,6 +389,8 @@ module Util
         `rm -rf #{STATIC_FILES_FOLDER}/job_#{job.id}`
       end
       url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
+      job.status = "success"
+      job.save
       Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
       
     end
@@ -410,6 +402,8 @@ module Util
   
   def handle_job_failure(job, event)
     tail = nil
+    job.status = 'incomplete'
+    job.save
     unless (event.instance_id.nil?)
       my_instance = Instance.find(event.instance_id)
       my_instance.status = "failure"
@@ -422,8 +416,7 @@ module Util
       Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
       # todo - be a little more bulletproof here. there may not always be an instance bucket or log file in said bucket. 
 
-      bucketname = "isb-cspotrun-instance-bucket-#{my_instance.sir_id}"
-      get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+      get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{my_instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
       `rm #{instance_dir}/cmonkey.log.txt.gz`
       `rmdir #{instance_dir}`

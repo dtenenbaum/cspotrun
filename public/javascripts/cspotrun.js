@@ -90,7 +90,6 @@ jQuery(document).ready(function() {
       }
    });
    
-   jQuery("#more_info").hide();
    
    jQuery("#show_more_info").click(function(){
        jQuery("#more_info").show();
@@ -100,7 +99,14 @@ jQuery(document).ready(function() {
        jQuery("#more_info").hide();
    });
    
-   jQuery("#please_wait").hide();
+   
+   jQuery("#show_pre_run_script_info").click(function(){
+       jQuery("#pre_run_script_info").show();
+   });
+   
+   jQuery("#hide_pre_run_script_info").click(function(){
+       jQuery("#pre_run_script_info").hide();
+   })
    
    jQuery(".if_ratios").hide();
    
@@ -144,7 +150,25 @@ jQuery(document).ready(function() {
       if(valid) { 
           jQuery("#please_wait").show();
           jQuery("#submit_new_job_button").attr("disabled","disabled");
+
+          /*
+          var u1 = jQuery("#u1").html();
+          var u2 = jQuery("#u2").html();
+
+          log("u1 = " + u1);
+          log("u2 = " + u2);
+          
+          log("v1="+jQuery("#preinitialized_rdata_file").val());
+          log("v2="+jQuery("#pre_run_script").val());
+
+          //jQuery("#u1").html(u2);
+          //jQuery("#u2").html(u1);
+          
+          return false;
+          
+          */
       }
+      
       
       
       return (valid);

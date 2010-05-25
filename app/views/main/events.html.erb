@@ -8,7 +8,9 @@ Number of instances: <%=@job.num_instances%> <br/>
 Price: $<%= @job.price %><br/>
 Instance type: <%= @job.instance_type %><br/>
 Owner: <%= @job.email %><br/>
+<% unless @job.user_supplied_rdata %>
 Organism: <%= @job.organism %><br/>
+<% end %>
 Project: <%= @job.project %><br/>
 Started: <%= @job.created_at %><br/>
 Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "ratios file" %><br/>
@@ -38,9 +40,9 @@ Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "rat
     <% end %>
   
   </table>
-  <%= link_to "Kill All Requests", :action => "kill_all_requests", :job_id => @job.id %> |
-  <%= link_to "Kill All Instances", :action => "kill_all_instances", :job_id => @job.id, :instance_ids => instance_ids() %> |
-  <%= link_to "Kill All Instances and Requests", :action => "kill_all", :job_id => @job.id, :instance_ids => instance_ids() %> |
+  <%= link_to "Kill All Requests", {:action => "kill_all_requests", :job_id => @job.id}, :confirm => "Are you sure?" %> |
+  <%= link_to "Kill All Instances", {:action => "kill_all_instances", :job_id => @job.id, :instance_ids => instance_ids()}, :confirm => "Are you sure?" %> |
+  <%= link_to "Kill All Instances and Requests", {:action => "kill_all", :job_id => @job.id, :instance_ids => instance_ids()}, :confirm => "Are you sure?" %> |
   Bump Job To Higher Price
   </p>
   
