@@ -130,7 +130,7 @@ class MainController < ApplicationController
   
   
   def get_file_path_of(thing)
-    
+    return nil if thing.nil?
     if (thing.kind_of?(String) and thing == "")
       return nil
     end
