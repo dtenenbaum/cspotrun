@@ -331,7 +331,7 @@ module Util
     return nil unless has_log_file?(instance)
     name = "/tmp/instance_log_#{instance.id}.gz"
     get_file_from_s3(get_instance_bucket(instance).name, "/#{instance.sir_id}/cmonkey.log.txt.gz", name)
-    stdout,stderr,error,status = run_cmd("gunzip #{name}")
+    stdout,stderr,error,status = run_cmd("#{GUNZIP_HOME}gunzip #{name}")
     return name.gsub(".gz","")
   end
   
