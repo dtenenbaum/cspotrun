@@ -3,11 +3,13 @@
 
 # arguments expected:
 # cmonkey.workdir - the directory where the cmonkey initialization will take place (data/ and progs/ must exist here)
+# cmonkey.packagedir - the directory where cMonkey_latest.tar.gz resides
 # organism - the three letter organism code
 # ratios.file - the name of the file containing the ratios
 # k.clust = the number of clusters (default 200)
 # n.iter = the number of iterations (default 3000)
 # parallel.cores = the number of cores
+
 # out.filename = the file to write the initialized environment to (the environment will be called 'e')
 
 args = (commandArgs(TRUE))
@@ -15,6 +17,9 @@ if (length(args) == 0) {
     print("No arguments supplied")
     q('no')
 }
+
+
+
 
 
 if (exists("n.iter")) {
@@ -28,6 +33,11 @@ if (exists("n.iter")) {
 for (i in 1:length(args)) {
     eval(parse(text=args[[i]]))
 }
+
+
+path <- paste(cmonkey.packagedir, "cMonkey_latest.tar.gz", sep="/")
+install.packages(path, repos=NULL, type="source")
+
 
 
 pc <- parallel.cores

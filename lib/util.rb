@@ -70,6 +70,14 @@ module Util
     logger.info message
   end
   
+  def get_latest_cmonkey()
+    #`rm -f cMonkey_latest.tar.gz`
+    #{}`wget http://baliga.systemsbiology.net/cmonkey/cMonkey_latest.tar.gz`
+    
+    `cd #{CMONKEY_PACKAGE_HOME} && rm -f cMonkey_latest.tar.gz && wget http://baliga.systemsbiology.net/cmonkey/cMonkey_latest.tar.gz`
+  end
+  
+  
   def spawn_job(job)
     # create init file
     lputs "in spawn_job"
@@ -97,6 +105,7 @@ module Util
         args = {}
         args['organism'] = job.organism
         args['cmonkey.workdir'] = CMONKEY_WORKDIR
+        args['cmonkey.packagedir'] = CMONKEY_PACKAGE_HOME
         args['ratios.file'] = job.ratios_file
         args['k.clust'] = job.k_clust
         args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
@@ -120,7 +129,8 @@ module Util
 
         lputs "R command line:\n#{cmd}"
 
-
+        get_latest_cmonkey()
+        
         #system("rm -f #{rdir}/out")
         stdout,stderr,error,status = run_cmd(cmd)
         #todo - see if there was an error initializing the RData file and if so, tell the user and abort. there is no point continuing.
