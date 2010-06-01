@@ -384,8 +384,8 @@ module Util
       instances.each_with_index do |instance, i|
         instance_dir = "#{jobdir}/instance_#{i+1}"
         Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-        get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{instance.sir_id}/complete.image.RData", "#{instance_dir}/complete.image.RData")
-        get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "#{instance.sir_id}/complete.image.RData", "#{instance_dir}/complete.image.RData")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "#{instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       end
       cmd = "cd #{STATIC_FILES_FOLDER};zip -r job_#{job.id}.zip job_#{job.id}/"
       zipfile = "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"
@@ -429,7 +429,7 @@ module Util
       Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
       # todo - be a little more bulletproof here. there may not always be an instance bucket or log file in said bucket. 
 
-      get_file_from_s3(INSTANCE_BUCKET_NAME, "/#{my_instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+      get_file_from_s3(INSTANCE_BUCKET_NAME, "#{my_instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
       `rm #{instance_dir}/cmonkey.log.txt.gz`
       `rmdir #{instance_dir}`
