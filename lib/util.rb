@@ -363,7 +363,7 @@ module Util
     return good
   end
   
-  def handle_job_completion(job, instance_id) #test with 70
+  def handle_job_completion(job, instance_id, send_email=true) #test with 70
     lputs "in Util.handle_job_completion, job id is #{job.id}"
     
     my_instance = Instance.find(instance_id)
@@ -402,7 +402,9 @@ module Util
       url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
       job.status = "success"
       job.save
-      Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
+      if (send_email)
+        Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
+      end
       
     end
     lputs "nothing to do"
