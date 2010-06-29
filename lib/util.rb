@@ -155,6 +155,11 @@ module Util
           fire_event("moving preinitialization script to job bucket", job)
           move_preinit_script(job)
         end
+        
+        if (job.has_postproc_script)
+          fire_event("moving postprocessing script to job bucket", job)
+          move_postproc_script(job)
+        end
 
         fire_event("moving initial data to job bucket",job)
         
@@ -296,6 +301,10 @@ module Util
   
   def move_preinit_script(job)
     put_file(JOB_BUCKET_NAME, "/tmp/preinit_#{job.id}.R", "#{get_short_hostname}/job-#{job.id}/preinit.R" )
+  end
+  
+  def move_postproc_script(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/postproc_#{job.id}.R", "#{get_short_hostname}/job-#{job.id}/postproc.R" )
   end
   
   def request_instances(job)

@@ -106,7 +106,16 @@ jQuery(document).ready(function() {
    
    jQuery("#hide_pre_run_script_info").click(function(){
        jQuery("#pre_run_script_info").hide();
-   })
+   });
+   
+   jQuery("#show_post_run_script_info").click(function(){
+      jQuery("#post_run_script_info").show()
+   });
+   
+   jQuery("#hide_post_run_script_info").click(function(){
+       jQuery("#post_run_script_info").hide();
+   });
+   
    
    jQuery(".if_ratios").hide();
    

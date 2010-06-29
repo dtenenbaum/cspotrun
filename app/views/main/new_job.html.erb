@@ -1450,6 +1450,28 @@ your job will be terminated.
 </tr>
 
 
+<tr class="if_rdata">
+<td>Custom post_processing script (<a id="show_post_run_script_info">more info</a>):
+<span id="post_run_script_info" class="hide_me">
+<br/>
+You can optionally provide a post-processing script, to be run <i>after</i> cMonkey processing is complete. 
+This should be a valid R script.
+It should assume that a cMonkey environment called "e" is already loaded. 
+<% # terminate job if post proc script fails? %>
+<br/><a id="hide_post_run_script_info">Hide</a><br/>
+
+</span>
+</td>
+<td id="u2">
+
+<%= file_field_tag 'post_run_script', :class => "formField"  %>
+
+
+</td>
+</tr>
+
+
+
 
 </table>
 <br/>

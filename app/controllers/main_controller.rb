@@ -158,7 +158,7 @@ class MainController < ApplicationController
 
 
     preinit = get_file_path_of params[:pre_run_script]
-
+    postinit = get_file_path_of params[:post_run_script]
     
     
     @job.name = params['job_name']
