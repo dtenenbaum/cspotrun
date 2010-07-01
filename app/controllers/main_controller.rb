@@ -158,7 +158,7 @@ class MainController < ApplicationController
 
 
     preinit = get_file_path_of params[:pre_run_script]
-    postinit = get_file_path_of params[:post_run_script]
+    postproc = get_file_path_of params[:post_run_script]
     
     
     @job.name = params['job_name']
@@ -183,6 +183,12 @@ class MainController < ApplicationController
         if (@job.has_preinit_script)
           FileUtils.rm_f "/tmp/preinit_#{@job.id}.R"
           FileUtils.mv preinit, "/tmp/preinit_#{@job.id}.R"
+        end
+        
+        @job.has_postproc_script = (!postproc.nil?)
+        if(@job.has_postproc_script)
+          FileUtils.rm_f "/tmp/postproc_#{@job.id}.R"
+          FileUtils.mv postproc, "/tmp/postproc_#{@job.id}.R"
         end
 
         

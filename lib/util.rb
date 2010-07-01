@@ -389,6 +389,16 @@ module Util
       jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
 
       Dir.mkdir(jobdir) unless (test(?d, jobdir))
+      
+      if (job.has_preinit_script)
+        get_file_from_s3(JOB_BUCKET_NAME, "#{get_short_hostname}/job-#{job.id}/preinit.R", "#{jobdir}/preinit.R")
+        
+      end
+      
+      if (job.has_postproc_script)
+        get_file_from_s3(JOB_BUCKET_NAME, "#{get_short_hostname}/job-#{job.id}/postproc.R", "#{jobdir}/postproc.R")
+      end
+      
 
       instances.each_with_index do |instance, i|
         instance_dir = "#{jobdir}/instance_#{i+1}"
