@@ -14,7 +14,7 @@ class MessageListener
 
   def start_queue()
     sqs = RightAws::SqsGen2.new(AWS_ACCOUNT_KEY,AWS_SECRET_KEY)
-    queue1 = sqs.queue("cspotrun-from-instances")
+    queue1 = sqs.queue("cspotrun-from-instances", true)
     return sqs, queue1
   end
 
