@@ -31,6 +31,10 @@ module CspotrunCommon
     [credentials['aws_access_key_id'],credentials['aws_secret_access_key']]    
   end
   
+  def get_config
+    config = YAML.load_file("cspotrun_config.yml")
+  end
+  
   def s3cmd_home()
     "/usr/local/s3sync"
   end
@@ -68,7 +72,8 @@ module CspotrunCommon
   end
 
   def get_job_bucket
-    get_bucket("isb-cspotrun-job-bucket")
+    get_bucket(get_config['job_bucket_name'])
+    #get_bucket("isb-cspotrun-job-bucket")
   end
 
   def get_job_bucket_old()
@@ -87,7 +92,8 @@ module CspotrunCommon
   end
 
   def get_instance_bucket
-    get_bucket("isb-cspotrun-instance-bucket")
+    get_bucket(get_config['instance_bucket_name'])
+    #get_bucket("isb-cspotrun-instance-bucket")
   end
 
   

@@ -14,7 +14,8 @@ login, password = credentials
 
 s3 = RightAws::S3.new(login,password)
 
-bucketname = 'isb-cspotrun-bootstrap'
+#bucketname = 'isb-cspotrun-bootstrap'
+bucketname = get_config['bootstrap_bucket_name']
 bucket = s3.bucket(bucketname)
 
 keys = bucket.keys

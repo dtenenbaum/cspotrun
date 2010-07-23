@@ -2,14 +2,106 @@ http://baliga.systemsbiology.net/drupal/content/cspotrun
 
 CSpotRun is a system to automatically run machine learning algorithms using spot instances on Amazon EC2.
 
-dependencies on webapp side:
+CSpotRun is not a publically accessible web site; however, you can set up your own instance of CSpotRun using your own Amazon Web Services account.
+This is a somewhat involved and time-consuming process.
 
-R and all cmonkey deps
-amazon ec2 api tools
-s3sync  / s3cmd
+On the web app side, CSpotRun has the following dependencies:
+- Ruby http://ruby-lang.org
+- Rails http://rubyonrails.com
+- MySQL http://mysql.com
 
 
-gems:
-rubygems
-RightAws
-will_paginate
+
+The following Ruby gems:
+rubygems http://rubygems.org
+RightAws http://rightaws.rubyforge.org/
+will_paginate http://wiki.github.com/mislav/will_paginate/
+
+The following command-line tools for communicating with S3:
+s3cmd http://s3tools.org/s3cmd (requires Python)
+s3cmd.rb http://www.s3sync.net/wiki
+Installing these will also provide the configuration necessary for CSpotRun to find your AWS login credentials.
+
+(If you are only going to be submitting preinitialized RData files, not text files, to CSpotRun, you can ignore these:)
+- R http://www.r-project.org/
+- cMonkey and all its dependencies http://baliga.systemsbiology.net/drupal/content/new-cmonkey-r-package-and-code
+
+Then, configure the web app as follows:
+cd <root-of-web-app>
+cp config/database.yml.example database.yml
+(edit config/database.yml to match your system)
+cp config/environment.rb.example config/environment.rb
+(edit config/environment.rb to match your system)
+
+In config/environments, copy *.example to *.rb and edit each to match your system.
+
+Run "rake db_schema_import" to create your database for the first time.
+
+We recommend that you use Phusion Passenger to host the production version of your CSpotRun web application.
+http://www.modrails.com/
+
+On the Amazon Web Services side:
+
+Make sure you have a valid Amazon Web Services account with the following services enabled:
+- EC2
+- SQS
+- S3
+Create the buckets defined in config/environment.rb in your web app.
+
+Download the custom machine image from here:
+Launch an EC2 instance using the following shared AMI
+(AMI ID is pending from Amazon....this will be updated)
+
+Create an EC2 keypair if you have not already done so. Call it "cspotrun-keypair"
+http://chris-richardson.blog-city.com/amazon_ec2_keypairs_and_other_stumbling_blocks_1.htm
+
+
+On your local machine, go to the directory where your local git repository for CSpotRun resides.
+Then to to the instance_scripts directory:
+cd instance_scripts
+
+do the following:
+cp s3config.yml.example s3config.yml
+cp cspotrun_config.ymlexample cspotrun_config.yml
+Edit s3config.yml with your Amazon AWS access key and secret key.
+Edit cspotrun_config.yml to match the bucket names you have specified in config/environment.rb. The final entry,
+"bootstrap_bucket_name" should be called "mysite-bootstrap-bucket" where "mysite" is the name of your organization, without punctuation.
+Make sure your bucket name is v2-safe as described here:
+http://developer.amazonwebservices.com/connect/thread.jspa?messageID=122336&#122336
+Make sure all three buckets exist in S3.
+
+Use scp to copy all files in instance_scripts to ~cmonkey on your ec2 instance.
+
+SSH to your EC2 instance and issue these commands:
+su - cmonkey
+chmod +x *.rb
+mkdir .s3conf
+mv s3config.yml .s3conf
+./bootstrap.rb
+exit
+
+You are now root again. Create your own copy of the CSpotRun image by following these steps:
+http://blogs.sun.com/branajam/entry/aws_experience_part_6_creating
+You can now exit the ssh session and halt this instance.
+
+Update the AMI_ID variable in config/environment.rb on the application side to have the AMI ID of the image you just created.
+
+Create one or more users for CSpotRun. On your local machine change to the directory for the rails webapp. Issue this command:
+script/console
+At the interactive console command, type:
+u = User.new(:email => "my@email.address", :password => "mypassword")
+u.save
+u
+You'll notice that after saving, your password is encrypted.
+Type "exit"" to exit the console.
+
+Now start the web app. On your local machine, from the directory where the web app is installed, type:
+script/server
+
+If all is well, the web app will start up on port 3000. You can access it through your browser at:
+http://localhost:3000
+You can log in with the login you just created and start up cMonkey jobs.
+
+
+If you run into difficulties, contact:
+dtenenbaum at systemsbiology dot org
