@@ -105,6 +105,9 @@ If all is well, the web app will start up on port 3000. You can access it throug
 http://localhost:3000
 You can log in with the login you just created and start up cMonkey jobs.
 
+In another shell, start up the process which listens for SQS messages:
+script/runner MessageListener
+
 
 If you run into difficulties, contact:
 dtenenbaum at systemsbiology dot org
