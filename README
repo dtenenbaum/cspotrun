@@ -39,6 +39,9 @@ Run "rake db_schema_import" to create your database for the first time.
 
 We recommend that you use Phusion Passenger to host the production version of your CSpotRun web application.
 http://www.modrails.com/
+However, start by getting the web application working on your local machine before trying to get it working in production.
+Is is probably necessary to be running Linux or Mac OS in order to host CSPotRun. You may be able to do it on Windows if you 
+are running Cygwin.
 
 On the Amazon Web Services side:
 
