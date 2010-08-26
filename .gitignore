@@ -9,3 +9,4 @@ data/hsa_200iters.RData
 data/*ratios.txt
 data/*.ratios
 data/*.RData
+data/Ar*

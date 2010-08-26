@@ -8,6 +8,8 @@
 <table>
   <tr>
     <th>ID</th>
+    <th>Instances</th>
+    <th>Status</th>
     <th>Name</th>
 <% if @all %> 
 	<th>Email</th>
@@ -18,6 +20,8 @@
 <% for job in @jobs %>
   <tr>
     <td><%= link_to job.id, :action => "events", :job_id => job.id %></td>
+    <td><%=job.instances.length%></td>
+    <td><%= job_status(job)%></td>
     <td><%= job.name %></td>
 <% if @all %>
 	<td><%= job.email %></td>

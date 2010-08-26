@@ -1,0 +1,3 @@
+# Move this file to /home/cmonkey/.s3conf/s3config.yml. edit the following values to match your system.
+aws_access_key_id: XXXXXXX
+aws_secret_access_key: YYYYYY

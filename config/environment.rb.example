@@ -79,6 +79,9 @@ Rails::Initializer.run do |config|
   AMI_ID = "my_ami_id"
   SYSADMIN_EMAIL = "my@email.address"
   CSPOTRUN_PASS = "somePassword"
+  JOB_BUCKET_NAME = "mysite-cspotrun-job-bucket"
+  INSTANCE_BUCKET_NAME = "mysite-cspotrun-instance-bucket"
+  
 end
 
 

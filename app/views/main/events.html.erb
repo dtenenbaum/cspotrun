@@ -1,8 +1,85 @@
 
 
-<% job_id = (params[:job_id]) ? params[:job_id] : @job.id %>
 
-<%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => job_id)) %><br/>
+
+
+<h2>Events for Job  number <%=@job.id%> (<%=@job.name%>)</h2>
+Number of instances: <%=@job.num_instances%> <br/>
+Price: $<%= @job.price %><br/>
+Instance type: <%= @job.instance_type %><br/>
+Owner: <%= @job.email %><br/>
+<% unless @job.user_supplied_rdata %>
+Organism: <%= @job.organism %><br/>
+<% end %>
+Project: <%= @job.project %><br/>
+Started: <%= @job.created_at %><br/>
+Data source: <%= (@job.user_supplied_rdata) ? "Preinitialized RData file" : "ratios file" %><br/>
+
+
+<% unless @status.nil? %>
+  <p>
+  <table border="1">
+    <tr>
+      <th>Request ID</th>
+      <th>Instance ID</th>
+      <th>Request State</th>
+      <th>Instance State</th>
+      <th>Hostname</th>
+      <th>Log File</th>
+    </tr>
+    
+    <% for item in @status %>
+      <tr>
+        <td><%= item[:spot_instance_request_id] %></td>
+        <td><%= (item.has_key?(:instance_id) ? item[:instance_id] : "(none)") %></td>
+        <td><%= describe_state(item[:state], "request", item[:spot_instance_request_id], @job) %></td>
+        <td><%= (item.has_key?(:instance_info)) ? describe_state(item[:instance_info][:aws_state], "instance", item[:instance_id], @job) : "(none)" %></td>
+        <td><%= (item.has_key?(:cspotrun_instance_id)) ? Instance.find(item[:cspotrun_instance_id]).public_ip  : "(unknown)"  %></td>
+        <td><%= (log_info(item)) ? link_to("Log", {:action => "show_log_file", :id => instance_id(item)}, :target => "cspotrun_log") : "none" %></td>
+      </tr>
+    <% end %>
+  
+  </table>
+  <%= link_to "Kill All Requests", {:action => "kill_all_requests", :job_id => @job.id}, :confirm => "Are you sure?" %> |
+  <%= link_to "Kill All Instances", {:action => "kill_all_instances", :job_id => @job.id, :instance_ids => instance_ids()}, :confirm => "Are you sure?" %> |
+  <%= link_to "Kill All Instances and Requests", {:action => "kill_all", :job_id => @job.id, :instance_ids => instance_ids()}, :confirm => "Are you sure?" %> |
+  Bump Job To Higher Price
+  </p>
+  
+  
+  <div id="status"></div>
+  
+  
+  
+  
+<% end %>
+
+
+<p>
+
+<% if @is_job_complete %>
+  <b>Job is complete!</b><br/>
+  <% if @zip_file_size.nil? %>
+    <%= link_to "Email me The Link to the data files", :action => "email_link", :job_id => @job.id %><br/>
+  <% end %>
+<% else %>
+<%# check to see if job is stalled before displaying the following link%>
+<%#= link_to "Bump job to higher price" %>
+
+<% end %>
+
+<% unless @zip_file_size.nil? %>
+  <b><%= link_to "Download Data File", @zip_file_url %></b> (<%= @zip_file_size %>)<br/>
+  <%#= link_to "Delete Data File from CSpotRun" %><br/>
+  <%#= link_to "Delete Data Files from S3" %><br/>
+<% end %>
+
+</p>
+
+
+
+<br/>
+<b><%= link_to("Refresh", url_for(:action => "events", :page_id => 1, :job_id => @job.id)) %></b><br/>
 
 Events:<br/>
 

@@ -12,7 +12,10 @@ class MainController < ApplicationController
   filter_parameter_logging :password
 
   
+  
   include Util
+
+
 
   Time.zone = "Pacific Time (US & Canada)"
 
@@ -68,13 +71,14 @@ class MainController < ApplicationController
   end
   
   def new_job
-    @small_price = latest_price("m1.large")
-    @large_price = latest_price("c1.xlarge")
+    @large_price, @small_price  = latest_price()
+    #@small_price = latest_price("m1.large")
+    #@large_price = latest_price("c1.xlarge")
     @small_recommended = recommended_price(@small_price)
     @large_recommended = recommended_price(@large_price)
   end
   
-  def test
+  def test_method # do not call a method "test", it conflicts with Kernel.test
     render :text => "ok"
   end
   
@@ -86,7 +90,7 @@ class MainController < ApplicationController
   def my_jobs
     lputs("current user is: #{session[:user]}")
     @all = false
-    @jobs = Job.paginate_by_email session[:user], :page => params[:page], :order => 'created_at DESC'
+    @jobs = Job.paginate_by_email session[:user], :include => :instances, :page => params[:page], :order => 'jobs.created_at DESC'
     render :action => "jobs"
   end
   
@@ -96,26 +100,66 @@ class MainController < ApplicationController
     render :action => "jobs"
   end
   
+  def show_log_file
+    headers['Content-type'] = 'text/plain'
+    instance = Instance.find params[:id]
+    file = get_log_file(instance)
+    #send_file file, :disposition => :inline
+    render :file => file
+  end
+  
   
   def events
     #puts "timezone = #{Time.zone}"
+    @job = Job.find params['job_id']
+    @status = get_job_status(@job)
+    @log_info = []
+    for instance in @job.instances
+      @log_info << [instance.id, has_log_file?(instance)]
+    end
+    
+    pp @status
+    @public_ip = nil
+#    if (@status.has_key?(:cspotrun_instance_id))
+#      @public_ip = Instance.find(@status[:cspotrun_instance_id]).public_ip
+#    end
     @events = Event.paginate_by_job_id params['job_id'], :include => :instance, :page => params[:page], :order => 'created_at DESC'
+    @zip_file_size, @zip_file_url = zip_file_size_and_url(@job)
+    @is_job_complete = is_job_complete?(@job)
+  end
+  
+  
+  def get_file_path_of(thing)
+    return nil if thing.nil?
+    if (thing.kind_of?(String) and thing == "")
+      return nil
+    end
+    
+    if thing.kind_of?(StringIO)
+      fname = "/tmp/#{Time.now.to_i}"
+      File.open(fname, "wb") { |f| f.write(thing.read) }
+      return fname
+    else
+      return thing.path
+    end
   end
   
   def submit_job
-    #@blanks = []
-    #for item in params.values
-    #  @blanks << item if (item.respond_to?(:empty?) and item.empty?)
-    #end
     
-    #render :action => "fillinfields" and return false unless @blanks.empty?
     
+
     @job = Job.new()
     
-    @job.user_supplied_rdata = (params[:preinitialized_rdata_file].respond_to?(:path)) ? true : false
     
-    #render :text => params[:preinitialized_rdata_file].path and return false if true
-    #render :text => @job.user_supplied_rdata and return false if true
+    
+    rdata_file = get_file_path_of params[:preinitialized_rdata_file]
+    
+    @job.user_supplied_rdata = (!rdata_file.nil?)
+
+
+    preinit = get_file_path_of params[:pre_run_script]
+    postproc = get_file_path_of params[:post_run_script]
+    
     
     @job.name = params['job_name']
     @job.price = params['price']
@@ -133,6 +177,20 @@ class MainController < ApplicationController
     #  Job.transaction do
 
         @job.save
+
+
+        @job.has_preinit_script = (!preinit.nil?)
+        if (@job.has_preinit_script)
+          FileUtils.rm_f "/tmp/preinit_#{@job.id}.R"
+          FileUtils.mv preinit, "/tmp/preinit_#{@job.id}.R"
+        end
+        
+        @job.has_postproc_script = (!postproc.nil?)
+        if(@job.has_postproc_script)
+          FileUtils.rm_f "/tmp/postproc_#{@job.id}.R"
+          FileUtils.mv postproc, "/tmp/postproc_#{@job.id}.R"
+        end
+
         
         fire_event("starting job #{@job.name} (id #{@job.id})", @job)
         @job.user_data_file = "/tmp/user_data_#{@job.id}.txt"
@@ -143,8 +201,8 @@ class MainController < ApplicationController
           
 
        if (@job.user_supplied_rdata)
-         fileobj = params[:preinitialized_rdata_file]
-         FileUtils.mv fileobj.path, "/tmp/initedEnv_#{@job.id}.RData"
+         FileUtils.rm_f "/tmp/initedEnv_#{@job.id}.RData"
+         FileUtils.mv rdata_file, "/tmp/initedEnv_#{@job.id}.RData"
          
          
          #File.open("/tmp/initedEnv_#{@job.id}.RData", "wb") { |f| f.write(fileobj.read) }
@@ -153,11 +211,11 @@ class MainController < ApplicationController
        else
          @job.ratios_file = "/tmp/ratios_#{@job.id}.txt" 
 
-         fileobj = params[:uploaded_file]
+         fileobj = get_file_path_of params[:uploaded_file]
 
          lputs "writing to #{@job.ratios_file}..."
 
-         FileUtils.mv fileobj.path, @job.ratios_file
+         FileUtils.mv fileobj, @job.ratios_file
 
          #File.open(@job.ratios_file, "wb") { |f| f.write(fileobj.read) }
 
@@ -171,6 +229,9 @@ class MainController < ApplicationController
          
        end
 
+        
+        
+        
         
 
         @job.save
@@ -203,17 +264,63 @@ class MainController < ApplicationController
     render(:action => "events", :job_id => @job.id) and return false
   end
   
+  def kill
+    job = Job.find(params[:job_id])
+    type = ""
+    if params[:id] =~ /^sir-/
+      type = "request"
+      result = kill_requests(params[:id])
+      fire_event("instance request #{params[:id]}  killed by user", job)
+    elsif params[:id] =~ /^i-/
+      type = "instance"
+      kill_instances(params[:id])
+      fire_event("instance #{params[:id]} killed by user", job, params[:id])
+    end
+    flash[:notice] = "#{type} #{params[:id]} killed."
+    flash[:notice] = "Error: #{result}" unless result.nil?
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
   
+  def kill_all_requests
+    flash[:notice] = "Requests killed."
+    job = Job.find params[:job_id]
+    
+    result = kill_requests(*job.instances.map{|i|i.sir_id})
+    flash[:notice] = "Error: #{result}" unless result.nil?
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def kill_all_instances
+    flash[:notice] = "Instances killed. They will be restarted if there are still active requests."
+    instances = params[:instance_ids].split(",")
+    result = kill_instances(instances)
+    flash[:notice] = "Error: #{result}" unless result.nil?
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def kill_all
+    flash[:notice] = "All requests and instances killed."
+    job = Job.find params[:job_id]
+    instances = params[:instance_ids].split(",")
+    res1 = kill_requests(*job.instances.map{|i|i.sir_id})
+    res2 = kill_instances(*instances)
+    if (!res1.nil? or !res2.nil?)
+      flash[:notice] = "Error: #{(res1.nil?) ? '' : res1} #{(res2.nil?)  ? '' : res2}"
+    end
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
+  
+  def email_link
+    job = Job.find params[:job_id]
+    handle_job_completion(job, job.instances.first.id)
+    flash[:notice] = "We are downloading the data and will send you an email when we're done."
+    redirect_to :action => "events", :job_id => params[:job_id]
+  end
   
 
   def hose
-    cmd = "EC2_HOME=/local/ec2-api-tools-1.3-46266 /local/ec2-api-tools-1.3-46266/bin/ec2-request-spot-instances --price 0.245 --instance-count 1 --instance-type c1.xlarge --key gsg-keypair --type persistent --user-data-file /tmp/user_data_7.txt ami-35c02e5c"
-#    cmd = "ec2-describe-spot-price-history --instance-type m1.large --start-time 2010-04-30T15:51:10.000Z"
-#    cmd = "ls"
-    env = {}
-#    #stdout, stderr, error, status = run_cmd(cmd)
-    status, stdout, stderr = systemu(cmd)#, 'env' => env)
-    render :text => "stdout = #{stdout}, stderr = #{stderr}, status = #{status}"
+    bortz()
+    render :text => "ok"
   end
   
 end

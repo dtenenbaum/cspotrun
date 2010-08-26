@@ -19,7 +19,9 @@ class Taxonomy
   end
   
   for thing in stuff
-    puts "<option value=\"#{thing[:tlc]}\">#{thing[:species]}</option>"
+    tlc = ""
+    tlc = " (EST)" if thing[:tlc].length == 4
+    puts "<option value=\"#{thing[:tlc]}\">#{thing[:species]}#{tlc}</option>"
   end
   
 end

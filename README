@@ -1,15 +1,6 @@
-http://baliga.systemsbiology.net/drupal/content/cspotrun
+
 
 CSpotRun is a system to automatically run machine learning algorithms using spot instances on Amazon EC2.
 
-dependencies on webapp side:
 
-R and all cmonkey deps
-amazon ec2 api tools
-s3sync  / s3cmd
-
-
-gems:
-rubygems
-RightAws
-will_paginate
+Please see http://baliga.systemsbiology.net/drupal/content/cspotrun for more information.

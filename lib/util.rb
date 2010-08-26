@@ -5,6 +5,7 @@ module Util
   require 'open3'
   require 'systemu'
   require 'yaml'
+  require 'pp'
   
   
   def logger
@@ -42,62 +43,40 @@ module Util
   end
   
   
-  def latest_price(instance_type)
-    timestamp = aws_timestamp(Time.now)
-    url = "http://baliga.systemsbiology.net/cgi-bin/get-pricing-info.rb?instance-type=#{instance_type}&start-time=#{timestamp}"
-    cmd = "curl -s \"#{url}\""
-    stdout,stderr,error = run_cmd(cmd)
-    if error
-      lputs "oops, an error:"
-      lputs stderr
+  def latest_price()
+    result = ec2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
+    c1_xlarge = 0.0
+    m1_large = 0.0
+    for item in result
+      if (item[:instance_type] == 'c1.xlarge')
+        c1_xlarge = item[:spot_price]
+      end
+      if(item[:instance_type] == 'm1.large')
+        m1_large = item[:spot_price]
+      end
     end
-    lputs "result:"
-    lputs stdout
-    lines = stdout.split("\n")
-    for line in lines
-      next if line.downcase =~ /windows/
-      segs = line.split(/\s/)
-      return segs[1].to_f
-    end
+    pp result
+    return c1_xlarge, m1_large
   end
   
-  def latest_price_old(instance_type)
-    lputs "getting latest price for #{instance_type}"
-    timestamp = aws_timestamp(Time.now)
-    cmd = "#{EC2_TOOLS_HOME}ec2-describe-spot-price-history --instance-type #{instance_type} --start-time #{timestamp}"
-    #stdout = `#{cmd}`
-    #error = false
-    stdout,stderr,error = run_cmd(cmd)
-    if error
-      lputs "oops, an error:"
-      lputs stderr
-    else
-      lputs "result:"
-      lputs stdout
-      lines = stdout.split("\n")
-      for line in lines
-        next if line.downcase =~ /windows/
-        segs = line.split(/\s/)
-        return segs[1].to_f
-      end
-      
-    end
-  end
+  
   
   def recommended_price(current_price)
     current_price + 0.01
   end
   
-  def aws_timestamp(timevar)
-    utc = timevar.utc
-     "#{utc.year}-#{"%02d" % utc.mon}-#{"%02d" % utc.mday}T#{"%02d" % utc.hour}:#{"%02d" % utc.min}:#{"%02d" % utc.sec}.000Z"
-  end
-  
-  
   def lputs(message)
     puts message
     logger.info message
   end
+  
+  def get_latest_cmonkey()
+    #`rm -f cMonkey_latest.tar.gz`
+    #{}`wget http://baliga.systemsbiology.net/cmonkey/cMonkey_latest.tar.gz`
+    
+    `cd #{CMONKEY_PACKAGE_HOME} && rm -f cMonkey_latest.tar.gz && wget http://baliga.systemsbiology.net/cmonkey/cMonkey_latest.tar.gz`
+  end
+  
   
   def spawn_job(job)
     # create init file
@@ -126,6 +105,7 @@ module Util
         args = {}
         args['organism'] = job.organism
         args['cmonkey.workdir'] = CMONKEY_WORKDIR
+        args['cmonkey.packagedir'] = CMONKEY_PACKAGE_HOME
         args['ratios.file'] = job.ratios_file
         args['k.clust'] = job.k_clust
         args['parallel.cores'] = (job.instance_type == "m1.large") ? 2 : 8
@@ -149,7 +129,8 @@ module Util
 
         lputs "R command line:\n#{cmd}"
 
-
+        get_latest_cmonkey()
+        
         #system("rm -f #{rdir}/out")
         stdout,stderr,error,status = run_cmd(cmd)
         #todo - see if there was an error initializing the RData file and if so, tell the user and abort. there is no point continuing.
@@ -169,20 +150,26 @@ module Util
       
       begin
         #include Util #if RAILS_ENV == 'development'
-        fire_event("creating job bucket", job)
-        job_bucket = create_job_bucket(job)
 
+        if (job.has_preinit_script)
+          fire_event("moving preinitialization script to job bucket", job)
+          move_preinit_script(job)
+        end
+        
+        if (job.has_postproc_script)
+          fire_event("moving postprocessing script to job bucket", job)
+          move_postproc_script(job)
+        end
 
         fire_event("moving initial data to job bucket",job)
-
-        move_data_to_job_bucket(job, job_bucket)
+        
+        
+        
+        move_data_to_job_bucket(job)
 
         fire_event("requesting instances",job)
         request_instances(job)
 
-        fire_event("creating instance buckets",job)
-
-        create_instance_buckets(job)
         lputs "done with spawning job #{job.id}"
 
       rescue Exception => ex
@@ -195,6 +182,15 @@ module Util
     ##end
     
   end
+  
+  def zip_file_size_and_url(job)
+    if (size = Kernel.test(?s, "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"))
+      if size > 4096
+        return "#{(size/1_000_000).to_i} MB", "#{STATIC_FILES_URL}/job_#{job.id}.zip"
+      end
+    end
+    return nil,nil
+  end
 
   def fire_event(text, job, instance_name=nil, public_ip=nil)
     id  = (job.is_a?(Fixnum)) ? job : job.id
@@ -203,7 +199,11 @@ module Util
 
     unless (instance_name.nil?)
       instance = Instance.find_by_sir_id(instance_name)
-      instance_id = instance.id unless instance.nil?
+      unless instance.nil?
+        instance_id = instance.id
+        instance.public_ip = public_ip
+        instance.save
+      end
     end
 
     lputs "firing event: #{text} on job #{id}, instance_id = #{instance_id}, public_ip = #{public_ip}"
@@ -217,14 +217,13 @@ module Util
     lputs "in test"
   end
   
-  def get_job_bucket_name(job)
-    hostname = safe_bucket_name(`hostname`.chomp())
-    "isb-cspotrun-job-bucket-#{hostname}-#{job.id}"
+  
+  def get_short_hostname
+    hostname = safe_bucket_name `hostname`
+    hostname.split(".").first
   end
+  
 
-  def create_job_bucket(job)
-    create_bucket(get_job_bucket_name(job))
-  end
   
   def s3login
     yaml = YAML::load_file("#{ENV['HOME']}/.s3conf/s3config.yml")
@@ -239,16 +238,51 @@ module Util
   end
   
   
-  def create_bucket(name)
-    cmd = "#{S3CMD_LOC}s3cmd mb s3://#{name}"
-    stdout, stderr, error, status = run_cmd(cmd)
-    lputs "stdout:\n#{stdout}"
-    lputs "stderr:\n#{stderr}"
-    lputs "status: #{status}"
-  end
   
-  def create_bucket_medium_old(name)
-    get_s3.bucket(name, true)
+  def get_job_status(job)
+    instances = job.instances
+    return nil if instances.nil? or instances.empty?
+    unfiltered_instance_request_results = ec2.describe_spot_instance_requests
+    #lputs "raw sir results:"
+    #pp unfiltered_instance_request_results
+    instance_request_results = []
+    list_of_instances = []
+    for item in unfiltered_instance_request_results
+      #lputs "sir id  = #{item[:spot_instance_request_id]}"
+      if instances.detect{|i|i.sir_id == item[:spot_instance_request_id]}
+        instance_request_results.push item
+        if item.has_key?(:instance_id)
+          list_of_instances.push item[:instance_id]
+        end
+      end
+    end
+    
+    
+    instance_results = ec2.describe_instances(list_of_instances)
+    
+    #lputs "sir results:"
+    #pp instance_request_results
+    #lputs "instance results:"
+    #pp instance_results
+    #lputs "list of instances:"
+    #pp list_of_instances
+    new_list = []
+
+    for item in instance_request_results
+      cspotrun_instance = instances.detect{|i|i.sir_id == item[:spot_instance_request_id]}
+      item[:cspotrun_instance_id] = cspotrun_instance.id unless cspotrun_instance.nil?
+      if (item.has_key?(:instance_id) and (f = instance_results.detect{|i|i[:aws_instance_id] == item[:instance_id]}))
+        lputs "we are here!"
+        #cspotrun_instance = instances.detect{|i|i.sir_id == f[:spot_instance_request_id]}
+        #item[:cspotrun_instance_id] = cspotrun_instance.id unless cspotrun_instance.nil?
+        item[:instance_info] = f
+      end
+      new_list << item
+    end
+    
+#    lputs "sir results:"
+#    pp new_list
+    return (new_list.empty?) ? nil : new_list
   end
   
   def put_file(bucket, file, remotename=nil)
@@ -260,80 +294,85 @@ module Util
     lputs "status: #{status}"
   end
   
-  def create_bucket_old(name)
-    lputs "Creating bucket #{name}"
-    cmd = "#{S3CMD_LOC}s3cmd.rb createbucket #{name}"
-    stdout, stderr, error = run_cmd(cmd)
-    if (error)
-      lputs.info "stderr output creating bucket:\n#{stderr}"
-    end
+  def move_data_to_job_bucket(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/initedEnv_#{job.id}.RData", "#{get_short_hostname}/job-#{job.id}/initedEnv.RData" )
   end
   
-  def move_data_to_job_bucket(job, job_bucket)
-    put_file(get_job_bucket_name(job), "/tmp/initedEnv_#{job.id}.RData", "initedEnv.RData" )
+  
+  def move_preinit_script(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/preinit_#{job.id}.R", "#{get_short_hostname}/job-#{job.id}/preinit.R" )
+  end
+  
+  def move_postproc_script(job)
+    put_file(JOB_BUCKET_NAME, "/tmp/postproc_#{job.id}.R", "#{get_short_hostname}/job-#{job.id}/postproc.R" )
   end
   
   def request_instances(job)
-    if RAILS_ENV == 'production'
-      request_instances_remote(job)
-    else
-      request_instances_local(job)
-    end
-  end
-  
-  
-  def request_instances_local(job)
-    cmd = job.command
-    stdout, stderr, error = run_cmd(cmd)
-    if (error)
-      lputs "stderr output requesting instances:\n#{stderr}"
-    end
-    lines = stdout.split("\n")
-    for line in lines
-      #SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
-      segs = line.split(/\s/)
-      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
-      i.save
-      fire_event("creating instance #{i.sir_id}", job)
-    end
-  end
-  
-  def request_instances_remote(job)
-    cmd = job.command
-    querystring = '"'
-    querystring += "pass=#{CSPOTRUN_PASS}&cmd=#{cmd.gsub(" ","+")}"
-    querystring += '"'
-    fullcmd = "curl -d  #{querystring} https://baliga.systemsbiology.net/cgi-bin/make-instance-request.rb"
-    stdout, stderr, error = run_cmd(fullcmd)
-    if (error)
-      lputs "stderr output requesting instances:\n#{stderr}"
-    end
-    lputs "length of stdout: #{stdout.length}"
-    lputs "result = \n#{stdout}"
-    lines = stdout.split("\n")
-    for line in lines
-      ##SPOTINSTANCEREQUEST     sir-bac91c04    0.127   persistent      Linux/UNIX     open     2010-04-15T11:15:17-0800                                               ami-35c02e5c     m1.large        gsg-keypair     default
-      segs = line.split(/\s/)
-      i = Instance.new(:job_id => job.id, :sir_id => segs[1])
-      i.save
-      fire_event("creating instance #{i.sir_id}", job)
-    end
+    user_data_yaml = YAML.load_file job.user_data_file
+    user_data = YAML::dump(user_data_yaml)
     
-  end
-  
-  def create_instance_buckets(job)
-    for instance in job.instances
-      name = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
-      create_bucket(name)
-      fire_event("creating instance bucket #{name}", job)
+    lputs "user data = "
+    pp user_data
+    args = {:image_id => AMI_ID, :spot_price => job.price, :instance_type => job.instance_type, :instance_count => job.num_instances,
+      :key_name => AWS_KEY, :type => "persistent", :user_data => user_data}
+    lputs "args = "
+    pp args
+    results = ec2.request_spot_instances args
+    pp results
+    for result in results
+      i = Instance.new(:job_id => job.id, :sir_id => result[:spot_instance_request_id])
+      i.save
+      fire_event("creating instance #{i.sir_id}", job)
     end
   end
+  
+  
+  
+  
+  def get_instance_bucket(instance)
+    s3 =  RightAws::S3.new(AWS_ACCOUNT_KEY, AWS_SECRET_KEY)
+    b = s3.bucket(INSTANCE_BUCKET_NAME)
+    #return !b.nil?
+    b
+  end
+  
+  def has_log_file?(instance)
+    b = get_instance_bucket(instance)
+    return nil if b.nil?
+    keys = b.keys
+    match = keys.detect{|i|i.full_name == "#{b.name}/#{instance.sir_id}/cmonkey.log.txt.gz"}
+    lputs "has log file? #{!match.nil?}"
+    return match
+  end
+    
+  
+  def get_log_file(instance) 
+    return nil unless has_log_file?(instance)
+    name = "/tmp/instance_log_#{instance.id}.gz"
+    FileUtils.rm_f name
+    get_file_from_s3(get_instance_bucket(instance).name, "#{instance.sir_id}/cmonkey.log.txt.gz", name)
+    stdout,stderr,error,status = run_cmd("#{GUNZIP_HOME}gunzip #{name}")
+    return name.gsub(".gz","")
+  end
+  
   
   def safe_bucket_name(name)
     name.downcase.gsub("_","-")
   end
+
+  def is_job_complete?(job)
+    instances = job.instances
+    return false if instances.empty?
+    success_stories = instances.select{|i|i.status == "success"}
+    good = (success_stories.length == instances.length)
+    if (good)
+      job.status = 'complete'
+      job.save
+    end
+    return good
+  end
   
-  def handle_job_completion(job, instance_id) #test with 70
+  def handle_job_completion(job, instance_id, send_email=true) #test with 70
     lputs "in Util.handle_job_completion, job id is #{job.id}"
     
     my_instance = Instance.find(instance_id)
@@ -350,13 +389,22 @@ module Util
       jobdir = "#{STATIC_FILES_FOLDER}/job_#{job.id}"
 
       Dir.mkdir(jobdir) unless (test(?d, jobdir))
+      
+      if (job.has_preinit_script)
+        get_file_from_s3(JOB_BUCKET_NAME, "#{get_short_hostname}/job-#{job.id}/preinit.R", "#{jobdir}/preinit.R")
+        
+      end
+      
+      if (job.has_postproc_script)
+        get_file_from_s3(JOB_BUCKET_NAME, "#{get_short_hostname}/job-#{job.id}/postproc.R", "#{jobdir}/postproc.R")
+      end
+      
 
       instances.each_with_index do |instance, i|
         instance_dir = "#{jobdir}/instance_#{i+1}"
         Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
-        bucketname = "isb-cspotrun-instance-bucket-#{instance.sir_id}"
-        get_file_from_s3(bucketname, "complete.image.RData", "#{instance_dir}/complete.image.RData")
-        get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "#{instance.sir_id}/complete.image.RData", "#{instance_dir}/complete.image.RData")
+        get_file_from_s3(INSTANCE_BUCKET_NAME, "#{instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       end
       cmd = "cd #{STATIC_FILES_FOLDER};zip -r job_#{job.id}.zip job_#{job.id}/"
       zipfile = "#{STATIC_FILES_FOLDER}/job_#{job.id}.zip"
@@ -371,10 +419,14 @@ module Util
         `rm -rf #{STATIC_FILES_FOLDER}/job_#{job.id}`
       end
       url = "#{STATIC_FILES_URL}/job_#{job.id}.zip"
-      Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
+      job.status = "success"
+      job.save
+      if (send_email)
+        Emailer.deliver_notify_success(url, job, File.stat(zipfile).size)
+      end
       
     end
-    
+    lputs "nothing to do"
     
     
   end
@@ -382,6 +434,8 @@ module Util
   
   def handle_job_failure(job, event)
     tail = nil
+    job.status = 'incomplete'
+    job.save
     unless (event.instance_id.nil?)
       my_instance = Instance.find(event.instance_id)
       my_instance.status = "failure"
@@ -394,8 +448,7 @@ module Util
       Dir.mkdir(instance_dir) unless (test(?d, instance_dir))
       # todo - be a little more bulletproof here. there may not always be an instance bucket or log file in said bucket. 
 
-      bucketname = "isb-cspotrun-instance-bucket-#{my_instance.sir_id}"
-      get_file_from_s3(bucketname, "cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
+      get_file_from_s3(INSTANCE_BUCKET_NAME, "#{my_instance.sir_id}/cmonkey.log.txt.gz", "#{instance_dir}/cmonkey.log.txt.gz")
       tail = `zcat #{instance_dir}/cmonkey.log.txt.gz|tail -200`
       `rm #{instance_dir}/cmonkey.log.txt.gz`
       `rmdir #{instance_dir}`
@@ -407,6 +460,7 @@ module Util
   end
   
   
+  
   def get_file_from_s3(bucketname, remotefile, localfile)
     cmd = "#{S3CMD_LOC}s3cmd get s3://#{bucketname}/#{remotefile} #{localfile}"
     stdout,stderr,error = run_cmd(cmd)
@@ -416,13 +470,30 @@ module Util
     lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
   end
   
-  def get_file_from_s3_old(bucketname, remotefile, localfile)
-    cmd = "#{S3CMD_LOC}s3cmd.rb get #{bucketname}:#{remotefile} #{localfile}"
-    stdout,stderr,error = run_cmd(cmd)
-    if (error)
-      lputs "stderr getting file from s3 (#{cmd}):\n#{stderr}"
+  def kill_requests(*ids)
+    begin
+      ec2.cancel_spot_instance_requests(ids)
+    rescue Exception => ex
+      lputs ex.message
+      lputs ex.backtrace
+      return ex.message
     end
-    lputs "stdout getting file from s3 (#{cmd}):\n#{stdout}"
+    nil
+  end
+  
+  def kill_instances(*ids)
+    begin
+      ec2.terminate_instances(ids)
+    rescue Exception => ex
+      lputs ex.message
+      lputs ex.backtrace
+      return ex.message
+    end
+    nil
+  end
+  
+  def ec2()
+    RightAws::Ec2.new(AWS_ACCOUNT_KEY, AWS_SECRET_KEY)
   end
   
   
