@@ -44,9 +44,10 @@ module Util
   
   
   def latest_price()
-    result = ec2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large"], :product_description => "Linux/UNIX")
+    result = ec2.describe_spot_price_history(:start_time => Time.now, :instance_types => ["c1.xlarge","m1.large","c1.medium"], :product_description => "Linux/UNIX")
     c1_xlarge = 0.0
     m1_large = 0.0
+    c1_medium = 0.0
     for item in result
       if (item[:instance_type] == 'c1.xlarge')
         c1_xlarge = item[:spot_price]
@@ -54,9 +55,12 @@ module Util
       if(item[:instance_type] == 'm1.large')
         m1_large = item[:spot_price]
       end
+      if(item[:instance_type] == 'c1.medium')
+        c1_medium = item[:spot_price]
+      end
     end
     pp result
-    return c1_xlarge, m1_large
+    return c1_xlarge, m1_large, c1_medium
   end
   
   

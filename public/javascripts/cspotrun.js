@@ -72,7 +72,16 @@ jQuery(document).ready(function() {
    jQuery("#pricing_history").attr("href", priceHistoryUrl.replace("INSTANCE_TYPE", jQuery("#processor_type").val()));
    
    jQuery("#processor_type").change(function(){
-      var id = (jQuery("#processor_type").val() == "m1.large") ? "#small_recommended_price" : "#large_recommended_price";
+	  var procType = jQuery("#processor_type").val();
+	  var id;
+	  if (procType == "m1.large") {
+	    id = "#small_recommended_price"	
+	  } else if (procType == "c1.xlarge") {
+		id = "#large_recommended_price";
+	  } else if (procType == "c1.medium") {
+		id = "#medium_recommended_price";
+	  }
+      //var id = (jQuery("#processor_type").val() == "m1.large") ? "#small_recommended_price" : "#large_recommended_price";
       jQuery("#price").val(jQuery(id).html());
       jQuery("#pricing_history").attr("href", priceHistoryUrl.replace("INSTANCE_TYPE", jQuery("#processor_type").val()));
    });

@@ -27,6 +27,7 @@ Processor type:
 <select id="processor_type" name="processor_type">
   <option value="c1.xlarge">c1.xlarge (8 cores) - latest price is $ <%=@large_price%></option>
 	<option value="m1.large">m1.large (2 cores) - latest price is $ <%=@small_price%></option>
+	<option value="c1.medium">c1.medium (2 cores) - latest price is $ <%=@medium_price%></option>
 </select>
 <a id="pricing_history" target="pricing_history" href="http://cloudexchange.org/charts/us-east-1.linux.INSTANCE_TYPE.html">pricing history</a>
 </td>
@@ -38,6 +39,7 @@ Spot price:
 <td>
 <span id="small_recommended_price" class="hide_me"><%=@small_recommended%></span>
 <span id="large_recommended_price" class="hide_me"><%=@large_recommended%></span>
+<span id="medium_recommended_price" class="hide_me"><%=@medium_recommended%></span>
 
 <input id="price" name="price">
 </td>

@@ -12,16 +12,16 @@
 ActiveRecord::Schema.define(:version => 20100628233854) do
 
   create_table "events", :force => true do |t|
-    t.integer  "job_id",      :limit => 11
+    t.integer  "job_id"
     t.string   "text"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "instance_id", :limit => 11
+    t.integer  "instance_id"
     t.string   "public_ip"
   end
 
   create_table "instances", :force => true do |t|
-    t.integer  "job_id",     :limit => 11
+    t.integer  "job_id"
     t.string   "sir_id"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -37,15 +37,15 @@ ActiveRecord::Schema.define(:version => 20100628233854) do
     t.string   "email"
     t.string   "organism"
     t.string   "project"
-    t.integer  "k_clust",             :limit => 11
+    t.integer  "k_clust"
     t.text     "ratios_file"
     t.boolean  "is_test_run"
     t.string   "command"
-    t.integer  "num_instances",       :limit => 11
+    t.integer  "num_instances"
     t.string   "user_data_file"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "n_iter",              :limit => 11
+    t.integer  "n_iter"
     t.boolean  "user_supplied_rdata"
     t.boolean  "has_preinit_script"
     t.string   "script_filename"

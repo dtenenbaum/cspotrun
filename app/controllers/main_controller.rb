@@ -71,11 +71,12 @@ class MainController < ApplicationController
   end
   
   def new_job
-    @large_price, @small_price  = latest_price()
+    @large_price, @small_price, @medium_price  = latest_price()
     #@small_price = latest_price("m1.large")
     #@large_price = latest_price("c1.xlarge")
     @small_recommended = recommended_price(@small_price)
     @large_recommended = recommended_price(@large_price)
+    @medium_recommended = recommended_price(@medium_price)
   end
   
   def test_method # do not call a method "test", it conflicts with Kernel.test
